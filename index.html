@@ -2,104 +2,44 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>reTerminal E-Ink Calendar</title>
+    <title>reTerminal Calendar</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/ical.js/1.5.0/ical.min.js"></script>
     <style>
-        :root { 
-            --bg: #fff; 
-            --text: #000; 
-            --border: #000; 
-            --today: #ddd; /* Slightly darker for better E-Ink contrast */
-            --off-bg: #fff; 
-            --off-text: #888;
-        }
-
+        :root { --bg: #fff; --text: #000; --today: #ccc; }
         * { box-sizing: border-box; -webkit-font-smoothing: antialiased; }
-
-        /* Prevent partial rendering: body is hidden until JS says 'ready' */
-        body { 
-            visibility: hidden; 
-            background: var(--bg); 
-            color: var(--text); 
-            font-family: sans-serif; 
-            margin: 0; 
-            padding: 0; 
-            width: 800px; 
-            height: 480px; 
-            overflow: hidden;
+        body, html { 
+            background: #fff; color: #000; font-family: sans-serif; 
+            margin: 0; padding: 0; width: 800px; height: 480px; overflow: hidden;
         }
-
         .container { display: flex; flex-direction: column; width: 800px; height: 480px; }
-
-        header { 
-            height: 50px; 
-            display: flex; 
-            justify-content: space-between; 
-            align-items: center; 
-            padding: 0 15px; 
-            border-bottom: 4px solid #000; 
-        }
-
-        #month-label { font-size: 26px; font-weight: 900; text-transform: uppercase; }
-        #status { font-size: 10px; font-weight: bold; }
-
-        .grid { 
-            display: grid; 
-            grid-template-columns: repeat(7, 1fr); 
-            grid-template-rows: 30px repeat(6, 1fr); 
-            flex: 1; 
-        }
-
-        .h { 
-            background: #000; 
-            color: #fff; 
-            text-align: center; 
-            line-height: 30px; 
-            font-size: 14px; 
-            font-weight: 800; 
-            text-transform: uppercase; 
-            border-right: 1px solid #fff;
-        }
-
-        .c { 
-            border-right: 1px solid #000; 
-            border-bottom: 1px solid #000; 
-            padding: 4px; 
-            overflow: hidden; 
-            display: flex;
-            flex-direction: column;
-        }
-
-        .c.today { background: var(--today); outline: 3px solid #000; outline-offset: -3px; }
-        .c.off { background: var(--off-bg); color: var(--off-text); }
-
-        .num { font-size: 16px; font-weight: 900; margin-bottom: 2px; }
-        .events { display: flex; flex-direction: column; gap: 2px; }
-
-        .e { 
-            font-size: 11px; 
-            font-weight: 700; 
-            background: #000; 
-            color: #fff; 
-            padding: 2px 4px; 
-            white-space: nowrap; 
-            overflow: hidden; 
-            text-overflow: ellipsis; 
-            border-radius: 2px; 
+        header { height: 50px; display: flex; justify-content: space-between; align-items: center; padding: 0 15px; border-bottom: 5px solid #000; }
+        #month-label { font-size: 28px; font-weight: 900; }
+        .grid { display: grid; grid-template-columns: repeat(7, 1fr); grid-template-rows: 30px repeat(6, 1fr); flex: 1; border-left: 1px solid #000; }
+        .h { background: #000; color: #fff; text-align: center; line-height: 30px; font-size: 14px; font-weight: 800; }
+        .c { border-right: 1px solid #000; border-bottom: 1px solid #000; padding: 4px; overflow: hidden; position: relative; }
+        .c.today { background: var(--today); }
+        .c.off { color: #999; }
+        .num { font-size: 18px; font-weight: 900; }
+        .e { font-size: 11px; font-weight: 800; background: #000; color: #fff; padding: 1px 3px; margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; border-radius: 2px; }
+        
+        /* Loading Overlay */
+        #loader {
+            position: fixed; top:0; left:0; width:800px; height:480px; 
+            background: white; display: flex; justify-content: center; 
+            align-items: center; z-index: 100; font-size: 24px; font-weight: bold;
         }
     </style>
 </head>
 <body>
-    <div class="container">
+    <div id="loader">FETCHING CALENDAR DATA...</div>
+
+    <div class="container" id="main-content" style="display:none;">
         <header>
-            <div id="month-label">CALENDAR</div>
-            <div id="status">REFRESHING...</div>
+            <div id="month-label">MONTH</div>
+            <div style="font-size: 12px; font-weight: bold;" id="time-label"></div>
         </header>
         <div class="grid" id="g">
-            <div class="h">Mon</div><div class="h">Tue</div><div class="h">Wed</div>
-            <div class="h">Thu</div><div class="h">Fri</div><div class="h">Sat</div>
-            <div class="h">Sun</div>
+            <div class="h">MON</div><div class="h">TUE</div><div class="h">WED</div><div class="h">THU</div><div class="h">FRI</div><div class="h">SAT</div><div class="h">SUN</div>
         </div>
     </div>
 
@@ -107,84 +47,69 @@
         const icalUrl = 'https://p108-caldav.icloud.com/published/2/MTUxMDYwNTYxNDE1MTA2MOcLt9DeC6aDOBzlZCUDejDdugx2IBT9HDhJA6jGIXwDHsR2_c0JH71EnIqBSkhBPTX-OE44UuANI0LecwDIOcg';
         const proxy = 'https://corsproxy.io/?' + encodeURIComponent(icalUrl);
 
-        function setupGrid() {
+        async function start() {
+            try {
+                // 1. Start fetching immediately
+                const response = await fetch(proxy);
+                const data = await response.text();
+
+                // 2. Short delay to ensure browser engine is "ready" to paint
+                await new Promise(r => setTimeout(r, 1500));
+
+                renderCalendar(data);
+
+                // 3. Swap visibility
+                document.getElementById('loader').style.display = 'none';
+                document.getElementById('main-content').style.display = 'flex';
+                
+            } catch (e) {
+                document.getElementById('loader').innerText = "ERROR LOADING DATA";
+            }
+        }
+
+        function renderCalendar(icalData) {
             const now = new Date();
             const year = now.getFullYear();
             const month = now.getMonth();
             
-            // Set Header Date
-            document.getElementById('month-label').innerText = now.toLocaleString('en-GB', { month: 'long', year: 'numeric' });
-            document.getElementById('status').innerText = 'UPDATED: ' + now.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
+            document.getElementById('month-label').innerText = now.toLocaleString('en-GB', { month: 'long' }).toUpperCase();
+            document.getElementById('time-label').innerText = now.toLocaleTimeString('en-GB', {hour: '2-digit', minute:'2-digit'});
 
-            const firstDayOfMonth = new Date(year, month, 1);
-            // Adjust for Monday start (0=Sun, 1=Mon... -> 0=Mon, 6=Sun)
-            let offset = firstDayOfMonth.getDay() - 1; 
-            if (offset === -1) offset = 6;
-
+            const first = new Date(year, month, 1);
+            let offset = first.getDay() - 1; if (offset === -1) offset = 6;
             const grid = document.getElementById('g');
-            
-            // Clear previous cells (but keep headers)
-            const headers = grid.querySelectorAll('.h');
-            grid.innerHTML = '';
-            headers.forEach(h => grid.appendChild(h));
 
-            // Generate 42 cells (6 weeks)
+            // Build grid
             for (let i = 0; i < 42; i++) {
                 const d = new Date(year, month, 1 - offset + i);
                 const cell = document.createElement('div');
-                
-                const isToday = d.toDateString() === now.toDateString();
-                const isOffMonth = d.getMonth() !== month;
-                
-                cell.className = 'c' + (isOffMonth ? ' off' : '') + (isToday ? ' today' : '');
-                cell.id = 'd-' + d.toDateString();
-                cell.innerHTML = `<div class="num">${d.getDate()}</div><div class="events"></div>`;
+                cell.className = 'c' + (d.getMonth() !== month ? ' off' : '') + (d.toDateString() === now.toDateString() ? ' today' : '');
+                cell.id = 'day-' + d.getFullYear() + '-' + d.getMonth() + '-' + d.getDate();
+                cell.innerHTML = `<div class="num">${d.getDate()}</div><div class="ev-list"></div>`;
                 grid.appendChild(cell);
             }
+
+            // Parse Events
+            const jcal = ICAL.parse(icalData);
+            const comp = new ICAL.Component(jcal);
+            const vevents = comp.getAllSubcomponents('vevent');
+
+            vevents.forEach(ve => {
+                const ev = new ICAL.Event(ve);
+                const sd = ev.startDate.toJSDate();
+                const id = 'day-' + sd.getFullYear() + '-' + sd.getMonth() + '-' + sd.getDate();
+                const cell = document.getElementById(id);
+                if (cell) {
+                    const list = cell.querySelector('.ev-list');
+                    const item = document.createElement('div');
+                    item.className = 'e';
+                    item.innerText = ev.summary;
+                    list.appendChild(item);
+                }
+            });
         }
 
-        async function init() {
-            try {
-                // 1. Fetch the data first
-                const res = await fetch(proxy);
-                if (!res.ok) throw new Error('Fetch failed');
-                const text = await res.text();
-
-                // 2. Build the UI while body is still hidden
-                setupGrid();
-
-                // 3. Parse and Inject Events
-                const jcal = ICAL.parse(text);
-                const comp = new ICAL.Component(jcal);
-                const events = comp.getAllSubcomponents('vevent');
-
-                events.forEach(ve => {
-                    const ev = new ICAL.Event(ve);
-                    const dateKey = 'd-' + ev.startDate.toJSDate().toDateString();
-                    const cell = document.getElementById(dateKey);
-                    
-                    if (cell) {
-                        const container = cell.querySelector('.events');
-                        const div = document.createElement('div');
-                        div.className = 'e';
-                        div.innerText = ev.summary;
-                        container.appendChild(div);
-                    }
-                });
-
-            } catch (err) {
-                console.error(err);
-                setupGrid(); // Show empty grid if fetch fails
-                document.getElementById('status').innerText = "SYNC ERROR";
-            } finally {
-                // 4. Final step: Reveal everything at once
-                // This is what forces the E-Ink screen to update with the final result.
-                document.body.style.visibility = 'visible';
-            }
-        }
-
-        // Run the process
-        init();
+        start();
     </script>
 </body>
 </html>
