@@ -14,11 +14,23 @@
 
         .container { display: flex; flex-direction: column; width: 800px; height: 480px; }
 
-        header { height: 45px; display: flex; align-items: center; padding: 0 15px; border-bottom: 4px solid var(--border); justify-content: space-between; }
-        #m-label { font-size: 22px; font-weight: 900; text-transform: uppercase; }
-        #status { font-size: 10px; font-weight: 700; color: #666; text-transform: uppercase; }
+        header { 
+            height: 45px; 
+            display: flex; 
+            align-items: center; 
+            padding: 0 15px; 
+            border-bottom: 5px solid var(--border); 
+        }
+        
+        #m-label { font-size: 26px; font-weight: 900; text-transform: uppercase; }
 
-        .grid { display: grid; grid-template-columns: repeat(7, 1fr); grid-template-rows: 25px repeat(6, 1fr); flex: 1; }
+        .grid { 
+            display: grid; 
+            grid-template-columns: repeat(7, 1fr); 
+            grid-template-rows: 25px repeat(6, 1fr); 
+            flex: 1; 
+        }
+        
         .h { background: var(--border); color: #fff; text-align: center; line-height: 25px; font-size: 11px; font-weight: 800; border-right: 1px solid #fff; }
         .c { border-right: 1px solid var(--border); border-bottom: 1px solid var(--border); padding: 4px; overflow: hidden; position: relative; }
         .c.today { background: var(--today); box-shadow: inset 0 0 0 2px var(--border); }
@@ -29,8 +41,8 @@
         .e { font-size: 10px; font-weight: 800; background: #000; color: #fff; padding: 1px 3px; 
              white-space: nowrap; overflow: hidden; text-overflow: ellipsis; border-radius: 1px; }
 
-        /* No scrollbars */
-        ::-webkit-scrollbar { display: none; }
+        /* No right border on the last column */
+        .h:last-child, .c:nth-child(7n+1) { border-right: none; }
     </style>
 </head>
 <body>
@@ -38,7 +50,6 @@
     <div class="container">
         <header>
             <div id="m-label">CALENDAR</div>
-            <div id="status">INIT...</div>
         </header>
         <div class="grid" id="g">
             <div class="h">MON</div><div class="h">TUE</div><div class="h">WED</div><div class="h">THU</div><div class="h">FRI</div><div class="h">SAT</div><div class="h">SUN</div>
@@ -53,8 +64,6 @@
         const year = now.getFullYear(), month = now.getMonth();
         const startOfMonth = new Date(year, month, 1);
         const endOfMonth = new Date(year, month + 1, 0);
-
-        function setStatus(msg) { document.getElementById('status').innerText = msg; }
 
         function buildGrid() {
             document.getElementById('m-label').innerText = now.toLocaleString('en-GB', {month:'long', year:'numeric'});
@@ -72,14 +81,10 @@
         }
 
         function fetchEvents() {
-            setStatus("CONNECTING...");
             fetch(proxy)
-                .then(res => {
-                    if(!res.ok) throw new Error();
-                    setStatus("PARSING...");
-                    return res.text();
-                })
+                .then(res => res.ok ? res.text() : null)
                 .then(text => {
+                    if (!text) return;
                     const raw = text.replace(/\r?\n[ \t]/g, '');
                     const eventBlocks = raw.match(/BEGIN:VEVENT[\s\S]*?END:VEVENT/g) || [];
                     
@@ -97,11 +102,8 @@
                             expand(dateStr, rrule, summary);
                         }
                     });
-                    setStatus("READY");
                 })
-                .catch(err => {
-                    setStatus("NETWORK ERROR");
-                });
+                .catch(err => console.log("Fetch Error"));
         }
 
         function expand(dateStr, rrule, summary) {
@@ -130,7 +132,6 @@
             }
         }
 
-        // Start
         buildGrid();
         fetchEvents();
     </script>
