@@ -19,73 +19,90 @@
             height: 10vh; display: flex; justify-content: space-between; 
             align-items: center; padding: 0 2vw; border-bottom: 5px solid #000; 
         }
-        .header-left { display: flex; align-items: center; gap: 10px; }
-        .btn { border: 3px solid #000; background: #fff; padding: 5px 12px; font-size: 1.8vh; font-weight: bold; border-radius: 5px; cursor: pointer; }
+        .btn { border: 3px solid #000; background: #fff; padding: 5px 12px; font-size: 1.8vh; font-weight: bold; border-radius: 5px; }
         .btn.active { background: #000; color: #fff; }
-        #month-label { font-size: 2.8vh; font-weight: 900; min-width: 120px; text-align: center; }
 
         /* Grid View */
         #grid-view { display: flex; flex-wrap: wrap; flex: 1; border-left: 1px solid #000; }
         .h, .c { width: 14.285%; border-right: 1px solid #000; border-bottom: 1px solid #000; }
         .h { background: #000; color: #fff; height: 4vh; line-height: 4vh; text-align: center; font-size: 1.6vh; font-weight: bold; }
-        .c { height: 14.3vh; padding: 5px; cursor: pointer; }
+        .c { height: 14.3vh; padding: 4px; cursor: pointer; }
         .c.today { background: var(--gray); box-shadow: inset 0 0 0 4px #000; }
         .c.off { color: #888; }
         .num { font-size: 2.5vh; font-weight: 900; }
-        .events-container { display: flex; flex-direction: column; gap: 2px; }
-        .e { font-size: 1.2vh; padding: 2px; border-radius: 2px; font-weight: bold; overflow: hidden; white-space: nowrap; }
-        .e-emirates { background: #000; color: #fff; }
-        .e-f1 { border: 1px solid #000; background: #fff; color: #000; }
+        .e { font-size: 1.1vh; padding: 1px 3px; background: #000; color: #fff; margin-bottom: 1px; border-radius: 2px; overflow: hidden; white-space: nowrap; }
+        .e-f1 { background: #fff; color: #000; border: 1px solid #000; }
 
-        /* Timeline View */
-        #day-view { display: none; flex: 1; overflow-y: scroll; position: relative; padding-left: 60px; }
-        #day-header { height: 8vh; padding: 10px 20px; font-size: 3vh; font-weight: 900; border-bottom: 2px solid #000; display: none; }
+        /* Timeline View (Screen Fit) */
+        #day-view { 
+            display: none; flex: 1; position: relative; 
+            padding-left: 50px; background: #fff; 
+            height: 90vh; /* Remaining space */
+        }
+        #timeline-content { position: relative; height: 100%; width: 100%; }
         
-        .time-slot { height: 60px; border-bottom: 1px solid #eee; position: relative; }
-        .time-label { position: absolute; left: -55px; top: -10px; font-size: 1.8vh; font-weight: bold; }
+        .time-slot { 
+            height: 3.75vh; /* 90vh / 24 hours = 3.75vh per hour */
+            border-bottom: 1px solid #ddd; position: relative; 
+        }
+        .time-label { position: absolute; left: -45px; top: -1vh; font-size: 1.4vh; font-weight: bold; }
         
         .visual-event { 
-            position: absolute; left: 5px; right: 20px; 
-            background: #000; color: #fff; padding: 10px; 
-            border-radius: 5px; font-weight: bold; font-size: 2.2vh;
-            z-index: 10; border: 2px solid #fff;
+            position: absolute; left: 2px; right: 10px; 
+            background: #000; color: #fff; padding: 4px 8px; 
+            border-radius: 4px; font-weight: bold; font-size: 1.8vh;
+            z-index: 10; border: 1px solid #fff;
+            overflow: hidden;
         }
-        .visual-f1 { background: #fff; color: #000; border: 4px solid #000; }
+        .visual-f1 { background: #fff; color: #000; border: 3px solid #000; }
+
+        /* Current Time Line */
+        #now-line { 
+            position: absolute; left: -50px; right: 0; 
+            border-top: 3px solid #000; z-index: 100; 
+            pointer-events: none;
+        }
+        #now-line::after {
+            content: 'NOW'; position: absolute; left: 0; top: -1.2vh;
+            background: #000; color: #fff; font-size: 1vh; padding: 2px;
+        }
     </style>
 </head>
 <body>
     <div class="container">
-        <header id="main-header">
+        <header>
             <div class="header-left" id="header-nav">
                 <button class="btn" onclick="changeMonth(-1)">&lt;</button>
-                <div id="month-label">---</div>
+                <div id="month-label" style="display:inline-block; width:100px; text-align:center; font-weight:900;">---</div>
                 <button class="btn" onclick="changeMonth(1)">&gt;</button>
                 <button class="btn" onclick="goToday()">TODAY</button>
                 <button id="btn-emirates" class="btn active" onclick="toggleCal('emirates')">EMIRATES</button>
                 <button id="btn-f1" class="btn active" onclick="toggleCal('f1')">F1</button>
             </div>
             <div class="header-left" id="header-back" style="display:none;">
-                <button class="btn" onclick="showGrid()" style="font-size: 2.5vh; padding: 10px 20px;">&larr; BACK TO CALENDAR</button>
-                <div id="day-title" style="margin-left: 20px; font-weight: 900; font-size: 2.5vh;"></div>
+                <button class="btn" onclick="showGrid()">&larr; BACK</button>
+                <div id="day-title" style="margin-left: 15px; font-weight: 900; font-size: 2.2vh;"></div>
             </div>
-            <div id="status" style="font-size: 1.5vh;">SYNCING...</div>
+            <div id="status" style="font-size: 1.4vh;">SYNCING...</div>
         </header>
 
         <div id="grid-view"></div>
         <div id="day-view">
-            <div id="timeline-content"></div>
+            <div id="timeline-content">
+                <div id="now-line"></div>
+                </div>
         </div>
     </div>
 
     <script>
         let currentViewDate = new Date();
-        let eventsData = []; 
+        let eventsData = [];
         const cals = {
             emirates: { url: 'https://corsproxy.io/?' + encodeURIComponent('https://p108-caldav.icloud.com/published/2/MTUxMDYwNTYxNDE1MTA2MOcLt9DeC6aDOBzlZCUDejDdugx2IBT9HDhJA6jGIXwDHsR2_c0JH71EnIqBSkhBPTX-OE44UuANI0LecwDIOcg'), active: true, class: 'e-emirates' },
             f1: { url: 'https://corsproxy.io/?' + encodeURIComponent('https://ics.ecal.com/ecal-sub/6978b519f1acee000262a2b5/Formula%201.ics'), active: true, class: 'e-f1' }
         };
 
-        function initTimeline() {
+        function buildTimelineStructure() {
             const content = document.getElementById('timeline-content');
             for(let i=0; i<24; i++) {
                 const hour = i < 10 ? '0'+i : i;
@@ -97,7 +114,7 @@
             const grid = document.getElementById('grid-view');
             grid.innerHTML = '';
             const year = currentViewDate.getFullYear(), month = currentViewDate.getMonth();
-            document.getElementById('month-label').innerText = currentViewDate.toLocaleString('default', { month: 'short', year: 'numeric' }).toUpperCase();
+            document.getElementById('month-label').innerText = currentViewDate.toLocaleString('default', { month: 'short' }).toUpperCase();
             ['MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT', 'SUN'].forEach(d => grid.innerHTML += `<div class="h">${d}</div>`);
             const start = new Date(year, month, 1);
             let offset = start.getDay() - 1; if (offset === -1) offset = 6;
@@ -107,7 +124,7 @@
                 const cell = document.createElement('div');
                 cell.className = 'c' + (d.getMonth() !== month ? ' off' : '') + (d.toDateString() === new Date().toDateString() ? ' today' : '');
                 cell.id = 'date-' + dStr;
-                cell.onclick = () => showTimeline(dStr, d.toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short' }));
+                cell.onclick = () => showTimeline(dStr, d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' }));
                 cell.innerHTML = `<div class="num">${d.getDate()}</div><div class="events-container" id="ec-${dStr}"></div>`;
                 grid.appendChild(cell);
             }
@@ -120,27 +137,28 @@
             document.getElementById('header-back').style.display = 'flex';
             document.getElementById('day-title').innerText = formatted.toUpperCase();
 
-            // Clear previous visual events
-            const oldEvents = document.querySelectorAll('.visual-event');
-            oldEvents.forEach(e => e.remove());
+            document.querySelectorAll('.visual-event').forEach(e => e.remove());
 
-            // Filter global eventsData for this date
-            const dayEvents = eventsData.filter(e => e.dateStr === dateStr);
-            dayEvents.forEach(ev => {
-                const startHour = ev.start.getHours();
-                const startMin = ev.start.getMinutes();
-                const durationHrs = (ev.end - ev.start) / 3600000;
-                
+            // Handle "Now" Line position
+            const now = new Date();
+            if (dateStr === now.toISOString().split('T')[0]) {
+                const mins = now.getHours() * 60 + now.getMinutes();
+                document.getElementById('now-line').style.top = (mins * (90/1440)) + 'vh';
+                document.getElementById('now-line').style.display = 'block';
+            } else {
+                document.getElementById('now-line').style.display = 'none';
+            }
+
+            eventsData.filter(e => e.dateStr === dateStr).forEach(ev => {
+                const startMins = ev.start.getHours() * 60 + ev.start.getMinutes();
+                const durationMins = (ev.end - ev.start) / 60000;
                 const el = document.createElement('div');
                 el.className = 'visual-event' + (ev.cal === 'f1' ? ' visual-f1' : '');
-                el.style.top = (startHour * 60 + startMin) + 'px';
-                el.style.height = Math.max(40, durationHrs * 60) + 'px'; // Min 40px height
-                el.innerHTML = `<span style="font-size: 1.5vh">${ev.start.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})}</span><br>${ev.title}`;
+                el.style.top = (startMins * (90/1440)) + 'vh';
+                el.style.height = (durationMins * (90/1440)) + 'vh';
+                el.innerHTML = ev.title;
                 document.getElementById('timeline-content').appendChild(el);
             });
-            
-            // Scroll to first event or morning
-            document.getElementById('day-view').scrollTop = 480; // 8:00 AM
         }
 
         function showGrid() {
@@ -160,18 +178,13 @@
                         const events = new ICAL.Component(jcal).getAllSubcomponents('vevent');
                         events.forEach(ve => {
                             const ev = new ICAL.Event(ve);
-                            const start = ev.startDate.toJSDate();
-                            const end = ev.endDate.toJSDate();
+                            const start = ev.startDate.toJSDate(), end = ev.endDate.toJSDate();
                             const dStr = start.toISOString().split('T')[0];
-                            
-                            // Store globally for timeline
                             eventsData.push({ dateStr: dStr, start, end, title: ev.summary, cal: key });
-
-                            // Add to grid
                             const container = document.getElementById('ec-' + dStr);
                             if (container) {
                                 const div = document.createElement('div');
-                                div.className = `e ${cals[key].class}`;
+                                div.className = `e ${key === 'f1' ? 'e-f1' : ''}`;
                                 div.innerText = ev.summary;
                                 container.appendChild(div);
                             }
@@ -190,10 +203,10 @@
             eventsData = [];
             document.querySelectorAll('.events-container').forEach(e => e.innerHTML = '');
             for (let key in cals) { if (cals[key].active) fetchCal(key); }
-            document.getElementById('status').innerText = 'UPDATED ' + new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+            document.getElementById('status').innerText = 'SYNC: ' + new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
         }
 
-        initTimeline();
+        buildTimelineStructure();
         buildGrid();
         refreshAllEvents();
     </script>
