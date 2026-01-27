@@ -3,94 +3,51 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Kindle Paperwhite 2025 Calendar</title>
+    <title>Kindle Calendar</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/ical.js/1.5.0/ical.min.js"></script>
     <style>
-        :root { 
-            --bg: #ffffff; 
-            --text: #000000; 
-            --border-thick: 4px;
-            --border-thin: 1px;
-            --today-bg: #e0e0e0; 
-        }
-
-        /* Basic Reset for Kindle */
+        :root { --bg: #fff; --text: #000; --today-gray: #d0d0d0; }
         * { box-sizing: border-box; -webkit-font-smoothing: none; }
-
+        
         body, html { 
-            margin: 0; padding: 0;
-            width: 100%; height: 100%;
-            overflow: hidden; /* Prevents unwanted scrolling */
-            background: var(--bg);
-            color: var(--text);
-            font-family: "Amazon Ember", Helvetica, Arial, sans-serif;
-            visibility: hidden; /* Wait for JS */
+            margin: 0; padding: 0; width: 100%; height: 100%; 
+            background: var(--bg); color: var(--text); 
+            font-family: "Helvetica", Arial, sans-serif; overflow: hidden;
         }
 
-        .container { 
-            display: flex; 
-            flex-direction: column; 
-            width: 100vw; 
-            height: 100vh; 
-        }
-
+        .container { display: flex; flex-direction: column; width: 100vw; height: 100vh; }
+        
         header { 
-            height: 10vh; /* Scaled to screen height */
-            display: flex; 
-            justify-content: space-between; 
-            align-items: center; 
-            padding: 0 2vw; 
-            border-bottom: var(--border-thick) solid #000; 
+            height: 10vh; display: flex; justify-content: space-between; 
+            align-items: center; padding: 0 3vw; border-bottom: 6px solid #000; 
         }
 
-        #month-label { font-size: 4vh; font-weight: 900; text-transform: uppercase; }
-        #status { font-size: 1.5vh; font-weight: bold; }
+        #month-label { font-size: 5vh; font-weight: 900; }
+        #status { font-size: 2vh; font-weight: bold; }
 
         .grid { 
-            display: grid; 
-            grid-template-columns: repeat(7, 1fr); 
-            /* 1 row for headers, 6 rows for days */
-            grid-template-rows: 5vh repeat(6, 1fr); 
-            flex: 1; 
-            width: 100%;
+            display: flex; flex-wrap: wrap; flex: 1; width: 100%; 
+            border-left: 1px solid #000;
         }
 
+        .h, .c { width: 14.285%; border-right: 1px solid #000; border-bottom: 1px solid #000; }
+        
         .h { 
-            background: #000; 
-            color: #fff; 
-            text-align: center; 
-            line-height: 5vh; 
-            font-size: 2vh; 
-            font-weight: 800; 
-            text-transform: uppercase; 
-            border-right: var(--border-thin) solid #fff;
+            background: #000; color: #fff; height: 5vh; line-height: 5vh; 
+            text-align: center; font-size: 2.2vh; font-weight: bold; 
         }
 
-        .c { 
-            border-right: var(--border-thin) solid #000; 
-            border-bottom: var(--border-thin) solid #000; 
-            padding: 0.5vw; 
-            display: flex;
-            flex-direction: column;
-            overflow: hidden;
-        }
-
-        .c.today { background: var(--today-bg); box-shadow: inset 0 0 0 4px #000; }
+        .c { height: 14.1vh; padding: 8px; position: relative; }
+        .c.today { background: var(--today-gray); box-shadow: inset 0 0 0 5px #000; }
         .c.off { color: #888; }
 
-        .num { font-size: 2.5vh; font-weight: 900; margin-bottom: 2px; }
-        .events { display: flex; flex-direction: column; gap: 2px; flex: 1; }
+        .num { font-size: 3.5vh; font-weight: 900; margin-bottom: 4px; }
+        .events-container { display: flex; flex-direction: column; gap: 3px; }
 
-        .e { 
-            font-size: 1.4vh; 
-            font-weight: bold; 
-            background: #000; 
-            color: #fff; 
-            padding: 2px 4px; 
-            white-space: nowrap; 
-            overflow: hidden; 
-            text-overflow: ellipsis; 
-            border-radius: 2px; 
+        .event-pill { 
+            background: #000; color: #fff; font-size: 1.6vh; 
+            padding: 2px 5px; border-radius: 3px; font-weight: bold;
+            white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
         }
     </style>
 </head>
@@ -98,33 +55,28 @@
     <div class="container">
         <header>
             <div id="month-label">---</div>
-            <div id="status">SYNCING...</div>
+            <div id="status">CONNECTING...</div>
         </header>
-        <div class="grid" id="g">
-            </div>
+        <div id="g" class="grid"></div>
     </div>
 
     <script>
-        const icalUrl = 'YOUR_ICAL_LINK_HERE'; 
-        const proxy = 'https://corsproxy.io/?' + encodeURIComponent(icalUrl);
+        // Your specific iCloud URL
+        const rawUrl = 'webcal://p108-caldav.icloud.com/published/2/MTUxMDYwNTYxNDE1MTA2MOcLt9DeC6aDOBzlZCUDejDdugx2IBT9HDhJA6jGIXwDHsR2_c0JH71EnIqBSkhBPTX-OE44UuANI0LecwDIOcg';
+        // Convert webcal to https and use a proxy to bypass Kindle CORS issues
+        const icalUrl = 'https://corsproxy.io/?' + encodeURIComponent(rawUrl.replace('webcal://', 'https://'));
 
-        function buildCalendar() {
+        function buildGrid() {
             const now = new Date();
             const year = now.getFullYear();
             const month = now.getMonth();
-            
-            document.getElementById('month-label').innerText = now.toLocaleString('en-GB', { month: 'long', year: 'numeric' });
-            document.getElementById('status').innerText = 'UPDATED: ' + now.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
-
             const grid = document.getElementById('g');
-            grid.innerHTML = ''; // Clear
+            
+            document.getElementById('month-label').innerText = now.toLocaleString('default', { month: 'long' }).toUpperCase();
 
-            // Add headers
-            ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].forEach(day => {
-                const h = document.createElement('div');
-                h.className = 'h';
-                h.innerText = day;
-                grid.appendChild(h);
+            // Headers
+            ['MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT', 'SUN'].forEach(day => {
+                grid.innerHTML += `<div class="h">${day}</div>`;
             });
 
             const firstDay = new Date(year, month, 1);
@@ -133,43 +85,54 @@
 
             for (let i = 0; i < 42; i++) {
                 const d = new Date(year, month, 1 - offset + i);
-                const cell = document.createElement('div');
                 const isToday = d.toDateString() === now.toDateString();
                 const isOff = d.getMonth() !== month;
-                
+                const dStr = d.toISOString().split('T')[0];
+
+                const cell = document.createElement('div');
                 cell.className = 'c' + (isOff ? ' off' : '') + (isToday ? ' today' : '');
-                cell.id = 'd-' + d.toDateString();
-                cell.innerHTML = `<div class="num">${d.getDate()}</div><div class="events"></div>`;
+                cell.id = 'date-' + dStr;
+                cell.innerHTML = `<div class="num">${d.getDate()}</div><div class="events-container"></div>`;
                 grid.appendChild(cell);
             }
         }
 
-        async function init() {
-            buildCalendar(); // Build structure first
-            try {
-                const res = await fetch(proxy);
-                const text = await res.text();
-                const jcal = ICAL.parse(text);
-                const events = new ICAL.Component(jcal).getAllSubcomponents('vevent');
+        function loadEvents() {
+            const xhr = new XMLHttpRequest();
+            xhr.open('GET', icalUrl, true);
+            xhr.onreadystatechange = function() {
+                if (xhr.readyState === 4) {
+                    if (xhr.status === 200) {
+                        try {
+                            const jcal = ICAL.parse(xhr.responseText);
+                            const comp = new ICAL.Component(jcal);
+                            const events = comp.getAllSubcomponents('vevent');
 
-                events.forEach(ve => {
-                    const ev = new ICAL.Event(ve);
-                    const dateKey = 'd-' + ev.startDate.toJSDate().toDateString();
-                    const cell = document.getElementById(dateKey);
-                    if (cell) {
-                        const div = document.createElement('div');
-                        div.className = 'e';
-                        div.innerText = ev.summary;
-                        cell.querySelector('.events').appendChild(div);
+                            events.forEach(ve => {
+                                const ev = new ICAL.Event(ve);
+                                const dStr = ev.startDate.toJSDate().toISOString().split('T')[0];
+                                const cell = document.getElementById('date-' + dStr);
+                                if (cell) {
+                                    const pill = document.createElement('div');
+                                    pill.className = 'event-pill';
+                                    pill.innerText = ev.summary;
+                                    cell.querySelector('.events-container').appendChild(pill);
+                                }
+                            });
+                            document.getElementById('status').innerText = 'LIVE SYNC';
+                        } catch(e) {
+                            document.getElementById('status').innerText = 'PARSE ERROR';
+                        }
+                    } else {
+                        document.getElementById('status').innerText = 'LINK ERROR';
                     }
-                });
-            } catch (e) {
-                document.getElementById('status').innerText = "OFFLINE";
-            } finally {
-                document.body.style.visibility = 'visible';
-            }
+                }
+            };
+            xhr.send();
         }
-        init();
+
+        buildGrid();
+        loadEvents();
     </script>
 </body>
 </html>
