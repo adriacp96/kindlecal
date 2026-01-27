@@ -2,137 +2,142 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Kindle E-Ink Calendar</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Kindle Paperwhite 2025 Calendar</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/ical.js/1.5.0/ical.min.js"></script>
     <style>
         :root { 
             --bg: #ffffff; 
             --text: #000000; 
-            --border: #000000; 
-            --today-bg: #e0e0e0; /* Light gray for E-ink */
-            --off-text: #777777;
+            --border-thick: 4px;
+            --border-thin: 1px;
+            --today-bg: #e0e0e0; 
         }
 
+        /* Basic Reset for Kindle */
         * { box-sizing: border-box; -webkit-font-smoothing: none; }
 
-        body { 
-            visibility: hidden; 
-            background: var(--bg); 
-            color: var(--text); 
-            font-family: "Amazon Ember", Helvetica, Arial, sans-serif; 
-            margin: 0; 
-            padding: 0; 
-            /* Paperwhite 2025 Landscape Resolution */
-            width: 1680px; 
-            height: 1264px; 
-            overflow: hidden;
+        body, html { 
+            margin: 0; padding: 0;
+            width: 100%; height: 100%;
+            overflow: hidden; /* Prevents unwanted scrolling */
+            background: var(--bg);
+            color: var(--text);
+            font-family: "Amazon Ember", Helvetica, Arial, sans-serif;
+            visibility: hidden; /* Wait for JS */
         }
 
         .container { 
             display: flex; 
             flex-direction: column; 
-            width: 1680px; 
-            height: 1264px; 
+            width: 100vw; 
+            height: 100vh; 
         }
 
         header { 
-            height: 120px; 
+            height: 10vh; /* Scaled to screen height */
             display: flex; 
             justify-content: space-between; 
             align-items: center; 
-            padding: 0 40px; 
-            border-bottom: 8px solid var(--border); 
+            padding: 0 2vw; 
+            border-bottom: var(--border-thick) solid #000; 
         }
 
-        #month-label { font-size: 54px; font-weight: 900; text-transform: uppercase; }
-        #status { font-size: 20px; font-weight: bold; }
+        #month-label { font-size: 4vh; font-weight: 900; text-transform: uppercase; }
+        #status { font-size: 1.5vh; font-weight: bold; }
 
         .grid { 
             display: grid; 
             grid-template-columns: repeat(7, 1fr); 
-            grid-template-rows: 60px repeat(6, 1fr); 
+            /* 1 row for headers, 6 rows for days */
+            grid-template-rows: 5vh repeat(6, 1fr); 
             flex: 1; 
+            width: 100%;
         }
 
         .h { 
             background: #000; 
             color: #fff; 
             text-align: center; 
-            line-height: 60px; 
-            font-size: 28px; 
+            line-height: 5vh; 
+            font-size: 2vh; 
             font-weight: 800; 
             text-transform: uppercase; 
-            border-right: 2px solid #fff;
+            border-right: var(--border-thin) solid #fff;
         }
 
         .c { 
-            border-right: 2px solid #000; 
-            border-bottom: 2px solid #000; 
-            padding: 15px; 
+            border-right: var(--border-thin) solid #000; 
+            border-bottom: var(--border-thin) solid #000; 
+            padding: 0.5vw; 
             display: flex;
             flex-direction: column;
+            overflow: hidden;
         }
 
-        /* Kindle doesn't do outlines well, using background and heavy border */
-        .c.today { background: var(--today-bg); border: 10px solid #000; padding: 7px; }
-        .c.off { color: var(--off-text); }
+        .c.today { background: var(--today-bg); box-shadow: inset 0 0 0 4px #000; }
+        .c.off { color: #888; }
 
-        .num { font-size: 36px; font-weight: 900; margin-bottom: 10px; }
-        .events { display: flex; flex-direction: column; gap: 6px; }
+        .num { font-size: 2.5vh; font-weight: 900; margin-bottom: 2px; }
+        .events { display: flex; flex-direction: column; gap: 2px; flex: 1; }
 
         .e { 
-            font-size: 22px; 
-            font-weight: 700; 
+            font-size: 1.4vh; 
+            font-weight: bold; 
             background: #000; 
             color: #fff; 
-            padding: 6px 10px; 
+            padding: 2px 4px; 
             white-space: nowrap; 
             overflow: hidden; 
             text-overflow: ellipsis; 
-            border-radius: 4px; 
+            border-radius: 2px; 
         }
     </style>
 </head>
 <body>
     <div class="container">
         <header>
-            <div id="month-label"></div>
-            <div id="status"></div>
+            <div id="month-label">---</div>
+            <div id="status">SYNCING...</div>
         </header>
         <div class="grid" id="g">
-            <div class="h">Mon</div><div class="h">Tue</div><div class="h">Wed</div>
-            <div class="h">Thu</div><div class="h">Fri</div><div class="h">Sat</div>
-            <div class="h">Sun</div>
-        </div>
+            </div>
     </div>
 
     <script>
         const icalUrl = 'YOUR_ICAL_LINK_HERE'; 
         const proxy = 'https://corsproxy.io/?' + encodeURIComponent(icalUrl);
 
-        function buildCalendarStructure() {
+        function buildCalendar() {
             const now = new Date();
             const year = now.getFullYear();
             const month = now.getMonth();
             
             document.getElementById('month-label').innerText = now.toLocaleString('en-GB', { month: 'long', year: 'numeric' });
-            document.getElementById('status').innerText = 'SYNCED: ' + now.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
-
-            const firstDayOfMonth = new Date(year, month, 1);
-            let offset = firstDayOfMonth.getDay() - 1; 
-            if (offset === -1) offset = 6;
+            document.getElementById('status').innerText = 'UPDATED: ' + now.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
 
             const grid = document.getElementById('g');
-            
+            grid.innerHTML = ''; // Clear
+
+            // Add headers
+            ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].forEach(day => {
+                const h = document.createElement('div');
+                h.className = 'h';
+                h.innerText = day;
+                grid.appendChild(h);
+            });
+
+            const firstDay = new Date(year, month, 1);
+            let offset = firstDay.getDay() - 1; 
+            if (offset === -1) offset = 6;
+
             for (let i = 0; i < 42; i++) {
                 const d = new Date(year, month, 1 - offset + i);
                 const cell = document.createElement('div');
-                
                 const isToday = d.toDateString() === now.toDateString();
-                const isOffMonth = d.getMonth() !== month;
+                const isOff = d.getMonth() !== month;
                 
-                cell.className = 'c' + (isOffMonth ? ' off' : '') + (isToday ? ' today' : '');
+                cell.className = 'c' + (isOff ? ' off' : '') + (isToday ? ' today' : '');
                 cell.id = 'd-' + d.toDateString();
                 cell.innerHTML = `<div class="num">${d.getDate()}</div><div class="events"></div>`;
                 grid.appendChild(cell);
@@ -140,40 +145,30 @@
         }
 
         async function init() {
+            buildCalendar(); // Build structure first
             try {
                 const res = await fetch(proxy);
                 const text = await res.text();
                 const jcal = ICAL.parse(text);
-                const comp = new ICAL.Component(jcal);
-                const events = comp.getAllSubcomponents('vevent');
-
-                buildCalendarStructure();
+                const events = new ICAL.Component(jcal).getAllSubcomponents('vevent');
 
                 events.forEach(ve => {
                     const ev = new ICAL.Event(ve);
                     const dateKey = 'd-' + ev.startDate.toJSDate().toDateString();
                     const cell = document.getElementById(dateKey);
-                    
                     if (cell) {
-                        const container = cell.querySelector('.events');
                         const div = document.createElement('div');
                         div.className = 'e';
                         div.innerText = ev.summary;
-                        container.appendChild(div);
+                        cell.querySelector('.events').appendChild(div);
                     }
                 });
-
-            } catch (err) {
-                buildCalendarStructure();
-                document.getElementById('status').innerText = "CONNECTION ERROR";
+            } catch (e) {
+                document.getElementById('status').innerText = "OFFLINE";
             } finally {
-                // Delay visibility to let the Kindle browser finish rendering the layout
-                setTimeout(() => {
-                    document.body.style.visibility = 'visible';
-                }, 500);
+                document.body.style.visibility = 'visible';
             }
         }
-
         init();
     </script>
 </body>
