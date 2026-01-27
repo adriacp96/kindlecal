@@ -10,14 +10,14 @@
             --bg: #fff; 
             --text: #000; 
             --border: #000; 
-            --today: #ddd; /* Slightly darker for better E-Ink contrast */
+            --today: #ddd; 
             --off-bg: #fff; 
             --off-text: #888;
         }
 
         * { box-sizing: border-box; -webkit-font-smoothing: antialiased; }
 
-        /* Prevent partial rendering: body is hidden until JS says 'ready' */
+        /* Stay hidden until the script is fully finished */
         body { 
             visibility: hidden; 
             background: var(--bg); 
@@ -93,8 +93,8 @@
 <body>
     <div class="container">
         <header>
-            <div id="month-label">CALENDAR</div>
-            <div id="status">REFRESHING...</div>
+            <div id="month-label"></div>
+            <div id="status"></div>
         </header>
         <div class="grid" id="g">
             <div class="h">Mon</div><div class="h">Tue</div><div class="h">Wed</div>
@@ -107,28 +107,20 @@
         const icalUrl = 'https://p108-caldav.icloud.com/published/2/MTUxMDYwNTYxNDE1MTA2MOcLt9DeC6aDOBzlZCUDejDdugx2IBT9HDhJA6jGIXwDHsR2_c0JH71EnIqBSkhBPTX-OE44UuANI0LecwDIOcg';
         const proxy = 'https://corsproxy.io/?' + encodeURIComponent(icalUrl);
 
-        function setupGrid() {
+        function buildCalendarStructure() {
             const now = new Date();
             const year = now.getFullYear();
             const month = now.getMonth();
             
-            // Set Header Date
             document.getElementById('month-label').innerText = now.toLocaleString('en-GB', { month: 'long', year: 'numeric' });
             document.getElementById('status').innerText = 'UPDATED: ' + now.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
 
             const firstDayOfMonth = new Date(year, month, 1);
-            // Adjust for Monday start (0=Sun, 1=Mon... -> 0=Mon, 6=Sun)
             let offset = firstDayOfMonth.getDay() - 1; 
             if (offset === -1) offset = 6;
 
             const grid = document.getElementById('g');
             
-            // Clear previous cells (but keep headers)
-            const headers = grid.querySelectorAll('.h');
-            grid.innerHTML = '';
-            headers.forEach(h => grid.appendChild(h));
-
-            // Generate 42 cells (6 weeks)
             for (let i = 0; i < 42; i++) {
                 const d = new Date(year, month, 1 - offset + i);
                 const cell = document.createElement('div');
@@ -145,19 +137,17 @@
 
         async function init() {
             try {
-                // 1. Fetch the data first
+                // 1. Get the data first while screen is invisible
                 const res = await fetch(proxy);
-                if (!res.ok) throw new Error('Fetch failed');
                 const text = await res.text();
-
-                // 2. Build the UI while body is still hidden
-                setupGrid();
-
-                // 3. Parse and Inject Events
                 const jcal = ICAL.parse(text);
                 const comp = new ICAL.Component(jcal);
                 const events = comp.getAllSubcomponents('vevent');
 
+                // 2. Build the grid
+                buildCalendarStructure();
+
+                // 3. Inject the events into the grid
                 events.forEach(ve => {
                     const ev = new ICAL.Event(ve);
                     const dateKey = 'd-' + ev.startDate.toJSDate().toDateString();
@@ -173,17 +163,15 @@
                 });
 
             } catch (err) {
-                console.error(err);
-                setupGrid(); // Show empty grid if fetch fails
-                document.getElementById('status').innerText = "SYNC ERROR";
+                console.error("Failed to load events:", err);
+                buildCalendarStructure(); // Fallback to empty grid
+                document.getElementById('status').innerText = "OFFLINE MODE";
             } finally {
-                // 4. Final step: Reveal everything at once
-                // This is what forces the E-Ink screen to update with the final result.
+                // 4. Reveal everything at the exact same moment
                 document.body.style.visibility = 'visible';
             }
         }
 
-        // Run the process
         init();
     </script>
 </body>
