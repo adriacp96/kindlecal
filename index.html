@@ -2,92 +2,112 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Fast reTerminal Calendar</title>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/ical.js/1.5.0/ical.min.js"></script>
+    <title>reTerminal Month Pro</title>
     <style>
-        :root { --bg: #fff; --text: #000; --border: #000; --today: #eee; }
-        * { box-sizing: border-box; -webkit-font-smoothing: antialiased; }
-        body, html { 
-            background: var(--bg); color: var(--text); 
-            font-family: sans-serif; margin: 0; padding: 0; 
-            width: 800px; height: 480px; overflow: hidden;
-        }
+        :root { --bg: #fff; --text: #000; --today: #eee; }
+        * { box-sizing: border-box; font-family: system-ui, sans-serif; }
+        body, html { background: var(--bg); color: var(--text); margin: 0; width: 800px; height: 480px; overflow: hidden; }
         .container { display: flex; flex-direction: column; width: 800px; height: 480px; }
-        header { height: 45px; display: flex; align-items: center; padding-left: 12px; border-bottom: 4px solid #000; }
-        #month-label { font-size: 24px; font-weight: 900; text-transform: uppercase; }
-        .grid { display: grid; grid-template-columns: repeat(7, 1fr); grid-template-rows: 25px repeat(6, 1fr); flex: 1; }
-        .h { background: #000; color: #fff; text-align: center; line-height: 25px; font-size: 12px; font-weight: 800; text-transform: uppercase; }
-        .c { border-right: 1px solid #000; border-bottom: 1px solid #000; padding: 4px; overflow: hidden; }
-        .c.today { background: var(--today); outline: 2px solid #000; outline-offset: -2px; }
-        .c.off { background: #fafafa; color: #999; }
-        .num { font-size: 14px; font-weight: 800; margin-bottom: 2px; }
-        .events { display: flex; flex-direction: column; gap: 2px; }
-        .e { font-size: 10px; font-weight: 700; background: #000; color: #fff; padding: 1px 3px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; border-radius: 1px; }
+        header { height: 45px; display: flex; align-items: center; padding: 0 15px; border-bottom: 4px solid #000; justify-content: space-between; }
+        #m-label { font-size: 22px; font-weight: 900; text-transform: uppercase; }
+        .grid { display: grid; grid-template-columns: repeat(7, 1fr); grid-template-rows: 25px repeat(6, 1fr); flex: 1; border-top: 1px solid #000; }
+        .h { background: #000; color: #fff; text-align: center; line-height: 25px; font-size: 11px; font-weight: 800; }
+        .c { border-right: 1px solid #000; border-bottom: 1px solid #000; padding: 3px; overflow: hidden; }
+        .c.today { background: var(--today); box-shadow: inset 0 0 0 2px #000; }
+        .c.off { color: #ccc; background: #fafafa; }
+        .num { font-size: 14px; font-weight: 900; }
+        .events { display: flex; flex-direction: column; gap: 2px; margin-top: 2px; }
+        .e { font-size: 9px; font-weight: 700; background: #000; color: #fff; padding: 1px 3px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; border-radius: 1px; }
     </style>
 </head>
 <body>
     <div class="container">
-        <header><div id="month-label">LOADING...</div></header>
+        <header><div id="m-label">Loading...</div></header>
         <div class="grid" id="g">
-            <div class="h">Mon</div><div class="h">Tue</div><div class="h">Wed</div><div class="h">Thu</div><div class="h">Fri</div><div class="h">Sat</div><div class="h">Sun</div>
+            <div class="h">MON</div><div class="h">TUE</div><div class="h">WED</div><div class="h">THU</div><div class="h">FRI</div><div class="h">SAT</div><div class="h">SUN</div>
         </div>
     </div>
 
     <script>
-        const icalUrl = 'https://p108-caldav.icloud.com/published/2/MTUxMDYwNTYxNDE1MTA2MOcLt9DeC6aDOBzlZCUDejDdugx2IBT9HDhJA6jGIXwDHsR2_c0JH71EnIqBSkhBPTX-OE44UuANI0LecwDIOcg';
-        const proxy = 'https://corsproxy.io/?' + encodeURIComponent(icalUrl);
+        const url = 'https://p108-caldav.icloud.com/published/2/MTUxMDYwNTYxNDE1MTA2MOcLt9DeC6aDOBzlZCUDejDdugx2IBT9HDhJA6jGIXwDHsR2_c0JH71EnIqBSkhBPTX-OE44UuANI0LecwDIOcg';
+        const proxy = 'https://corsproxy.io/?' + encodeURIComponent(url);
 
-        function setupGrid() {
-            const now = new Date();
-            const year = now.getFullYear();
-            const month = now.getMonth();
-            document.getElementById('month-label').innerText = now.toLocaleString('en-GB', { month: 'long', year: 'numeric' });
+        const now = new Date();
+        const year = now.getFullYear(), month = now.getMonth();
+        const startOfMonth = new Date(year, month, 1);
+        const endOfMonth = new Date(year, month + 1, 0);
 
-            const first = new Date(year, month, 1);
-            let offset = first.getDay() - 1; if (offset === -1) offset = 6;
+        function init() {
+            document.getElementById('m-label').innerText = now.toLocaleString('en-GB', {month:'long', year:'numeric'});
+            let offset = (startOfMonth.getDay() + 6) % 7; 
             const grid = document.getElementById('g');
 
             for (let i = 0; i < 42; i++) {
                 const d = new Date(year, month, 1 - offset + i);
                 const cell = document.createElement('div');
                 cell.className = 'c' + (d.getMonth() !== month ? ' off' : '') + (d.toDateString() === now.toDateString() ? ' today' : '');
-                cell.id = 'd-' + d.toDateString();
+                cell.id = 'd-' + d.toISOString().split('T')[0].replace(/-/g, '');
                 cell.innerHTML = `<div class="num">${d.getDate()}</div><div class="events"></div>`;
                 grid.appendChild(cell);
             }
+            fetchEvents();
         }
 
-        async function loadEvents() {
+        function addEventToUI(dateStr, title) {
+            const cell = document.getElementById('d-' + dateStr);
+            if (cell) {
+                const div = document.createElement('div');
+                div.className = 'e';
+                div.innerText = title;
+                cell.querySelector('.events').appendChild(div);
+            }
+        }
+
+        async function fetchEvents() {
             try {
                 const res = await fetch(proxy);
-                const text = await res.text();
-                // Wrap parsing in a micro-task so the grid paints first
-                setTimeout(() => {
-                    const jcal = ICAL.parse(text);
-                    const comp = new ICAL.Component(jcal);
-                    const events = comp.getAllSubcomponents('vevent');
-                    
-                    events.forEach(ve => {
-                        const ev = new ICAL.Event(ve);
-                        const key = 'd-' + ev.startDate.toJSDate().toDateString();
-                        const cell = document.getElementById(key);
-                        if (cell) {
-                            const container = cell.querySelector('.events');
-                            const div = document.createElement('div');
-                            div.className = 'e';
-                            div.innerText = ev.summary;
-                            container.appendChild(div);
-                        }
-                    });
-                }, 10);
-            } catch (e) { console.error("Sync Error"); }
+                let raw = (await res.text()).replace(/\r?\n[ \t]/g, '');
+
+                const eventBlocks = raw.match(/BEGIN:VEVENT[\s\S]*?END:VEVENT/g) || [];
+
+                eventBlocks.forEach(block => {
+                    const summary = (block.match(/SUMMARY:(.*)/) || [])[1]?.trim() || "Event";
+                    const dtstartMatch = block.match(/DTSTART(?:;VALUE=DATE|;TZID=.*)?:(\d{8})/);
+                    if (!dtstartMatch) return;
+
+                    const startDateStr = dtstartMatch[1];
+                    const rrule = (block.match(/RRULE:(.*)/) || [])[1];
+
+                    if (!rrule) {
+                        addEventToUI(startDateStr, summary);
+                    } else {
+                        expandRRULE(startDateStr, rrule, summary);
+                    }
+                });
+            } catch (e) { console.error(e); }
         }
 
-        // Run setup immediately, then load events after a frame
-        setupGrid();
-        requestAnimationFrame(() => {
-            loadEvents();
-        });
+        function expandRRULE(startStr, rule, title) {
+            const sY = parseInt(startStr.substring(0,4)), sM = parseInt(startStr.substring(4,6))-1, sD = parseInt(startStr.substring(6,8));
+            let curr = new Date(sY, sM, sD);
+            
+            // Limit expansion to prevent infinite loops (only check current month)
+            for (let i = 0; i < 400; i++) { 
+                if (curr > endOfMonth) break;
+                
+                if (curr >= startOfMonth) {
+                    const id = curr.toISOString().split('T')[0].replace(/-/g, '');
+                    addEventToUI(id, title);
+                }
+
+                if (rule.includes("FREQ=DAILY")) curr.setDate(curr.getDate() + 1);
+                else if (rule.includes("FREQ=WEEKLY")) curr.setDate(curr.getDate() + 7);
+                else if (rule.includes("FREQ=MONTHLY")) curr.setMonth(curr.getMonth() + 1);
+                else break; // Support basic recurrences only for speed
+            }
+        }
+
+        init();
     </script>
 </body>
 </html>
