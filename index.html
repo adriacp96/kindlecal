@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>reTerminal Monthly Calendar</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/ical.js/1.5.0/ical.min.js"></script>
+    <style>
+        :root {
+            --bg: #ffffff;
+            --text: #000000;
+            --grid-line: #000000;
+            --today-bg: #eeeeee;
+        }
+
+        body {
+            background-color: var(--bg);
+            color: var(--text);
+            font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            width: 1280px;
+            height: 720px;
+            box-sizing: border-box;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        header {
+            padding: 15px 25px;
+            border-bottom: 6px solid #000;
+            display: flex;
+            justify-content: flex-start;
+            align-items: center;
+        }
+
+        #month-label {
+            font-size: 42px;
+            font-weight: 900;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+
+        .calendar-grid {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            grid-template-rows: 50px repeat(6, 1fr); /* Accommodates all month lengths */
+            flex-grow: 1;
+        }
+
+        .day-header {
+            background: #000;
+            color: #fff;
+            text-align: center;
+            line-height: 50px;
+            font-weight: 800;
+            font-size: 18px;
+            text-transform: uppercase;
+            border-right: 1px solid #fff;
+        }
+
+        .day-cell {
+            border-right: 2px solid var(--grid-line);
+            border-bottom: 2px solid var(--grid-line);
+            padding: 8px;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .day-cell.today {
+            background-color: var(--today-bg);
+        }
+
+        .day-cell.other-month {
+            color: #bbbbbb;
+            background-image: radial-gradient(#eeeeee 1px, transparent 1px);
+            background-size: 10px 10px;
+        }
+
+        .day-number {
+            font-size: 24px;
+            font-weight: 800;
+            margin-bottom: 6px;
+        }
+
+        .events-container {
+            flex-grow: 1;
+            overflow: hidden;
+        }
+
+        .event-item {
+            font-size: 13px;
+            font-weight: 700;
+            margin-bottom: 3px;
+            padding: 3px 6px;
+            border-left: 4px solid #000;
+            background: #f9f9f9;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <div id="month-label">Loading Month...</div>
+    </header>
+
+    <div class="calendar-grid" id="calendar-grid">
+        <div class="day-header">Mon</div>
+        <div class="day-header">Tue</div>
+        <div class="day-header">Wed</div>
+        <div class="day-header">Thu</div>
+        <div class="day-header">Fri</div>
+        <div class="day-header">Sat</div>
+        <div class="day-header">Sun</div>
+    </div>
+
+    <script>
+        const icalUrl = 'https://p108-caldav.icloud.com/published/2/MTUxMDYwNTYxNDE1MTA2MOcLt9DeC6aDOBzlZCUDejDdugx2IBT9HDhJA6jGIXwDHsR2_c0JH71EnIqBSkhBPTX-OE44UuANI0LecwDIOcg';
+        const proxy = 'https://corsproxy.io/?' + encodeURIComponent(icalUrl);
+
+        async function renderCalendar() {
+            const now = new Date();
+            const year = now.getFullYear();
+            const month = now.getMonth();
+            
+            document.getElementById('month-label').innerText = now.toLocaleString('en-GB', { month: 'long', year: 'numeric' });
+
+            const firstDay = new Date(year, month, 1);
+            let startOffset = firstDay.getDay() - 1; // Align to Monday
+            if (startOffset === -1) startOffset = 6;
+
+            const grid = document.getElementById('calendar-grid');
+            const totalCells = 42; 
+
+            for (let i = 0; i < totalCells; i++) {
+                const dayDate = new Date(year, month, 1 - startOffset + i);
+                const cell = document.createElement('div');
+                cell.className = 'day-cell';
+                if (dayDate.getMonth() !== month) cell.classList.add('other-month');
+                if (dayDate.toDateString() === now.toDateString()) cell.classList.add('today');
+
+                cell.innerHTML = `
+                    <div class="day-number">${dayDate.getDate()}</div>
+                    <div class="events-container"></div>
+                `;
+                cell.dataset.date = dayDate.toDateString();
+                grid.appendChild(cell);
+            }
+
+            try {
+                const response = await fetch(proxy);
+                const data = await response.text();
+                const jcalData = ICAL.parse(data);
+                const comp = new ICAL.Component(jcalData);
+                const vevents = comp.getAllSubcomponents('vevent');
+
+                vevents.forEach(ve => {
+                    const event = new ICAL.Event(ve);
+                    const startDate = event.startDate.toJSDate();
+                    const dateKey = startDate.toDateString();
+                    
+                    const targetCell = grid.querySelector(`[data-date="${dateKey}"]`);
+                    if (targetCell) {
+                        const evDiv = document.createElement('div');
+                        evDiv.className = 'event-item';
+                        evDiv.innerText = event.summary;
+                        targetCell.querySelector('.events-container').appendChild(evDiv);
+                    }
+                });
+            } catch (e) {
+                console.error("Calendar fetch error", e);
+            }
+        }
+
+        renderCalendar();
+    </script>
+</body>
+</html>
