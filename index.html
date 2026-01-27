@@ -2,143 +2,92 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>reTerminal Dashboard</title>
+    <title>Fast reTerminal Calendar</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/ical.js/1.5.0/ical.min.js"></script>
     <style>
-        :root { --bg: #fff; --text: #000; --today: #eee; --border: #000; }
-        * { box-sizing: border-box; font-family: system-ui, sans-serif; }
-        body, html { background: var(--bg); color: var(--text); margin: 0; width: 800px; height: 480px; overflow: hidden; }
+        :root { --bg: #fff; --text: #000; --border: #000; --today: #eee; }
+        * { box-sizing: border-box; -webkit-font-smoothing: antialiased; }
+        body, html { 
+            background: var(--bg); color: var(--text); 
+            font-family: sans-serif; margin: 0; padding: 0; 
+            width: 800px; height: 480px; overflow: hidden;
+        }
         .container { display: flex; flex-direction: column; width: 800px; height: 480px; }
-        header { height: 45px; display: flex; align-items: center; padding: 0 15px; border-bottom: 5px solid var(--border); }
-        #m-label { font-size: 26px; font-weight: 900; text-transform: uppercase; }
+        header { height: 45px; display: flex; align-items: center; padding-left: 12px; border-bottom: 4px solid #000; }
+        #month-label { font-size: 24px; font-weight: 900; text-transform: uppercase; }
         .grid { display: grid; grid-template-columns: repeat(7, 1fr); grid-template-rows: 25px repeat(6, 1fr); flex: 1; }
-        .h { background: var(--border); color: #fff; text-align: center; line-height: 25px; font-size: 11px; font-weight: 800; border-right: 1px solid #fff; }
-        .c { border-right: 1px solid var(--border); border-bottom: 1px solid var(--border); padding: 4px; overflow: hidden; position: relative; }
-        .c.today { background: var(--today); box-shadow: inset 0 0 0 2px var(--border); }
-        .c.off { color: #bbb; background: #fafafa; }
-        .num { font-size: 16px; font-weight: 900; }
-        .events { display: flex; flex-direction: column; gap: 2px; margin-top: 2px; }
-        .e { font-size: 10px; font-weight: 800; background: #000; color: #fff; padding: 1px 3px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; border-radius: 1px; }
-        .h:last-child { border-right: none; }
+        .h { background: #000; color: #fff; text-align: center; line-height: 25px; font-size: 12px; font-weight: 800; text-transform: uppercase; }
+        .c { border-right: 1px solid #000; border-bottom: 1px solid #000; padding: 4px; overflow: hidden; }
+        .c.today { background: var(--today); outline: 2px solid #000; outline-offset: -2px; }
+        .c.off { background: #fafafa; color: #999; }
+        .num { font-size: 14px; font-weight: 800; margin-bottom: 2px; }
+        .events { display: flex; flex-direction: column; gap: 2px; }
+        .e { font-size: 10px; font-weight: 700; background: #000; color: #fff; padding: 1px 3px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; border-radius: 1px; }
     </style>
 </head>
 <body>
-
     <div class="container">
-        <header><div id="m-label">CALENDAR</div></header>
+        <header><div id="month-label">LOADING...</div></header>
         <div class="grid" id="g">
-            <div class="h">MON</div><div class="h">TUE</div><div class="h">WED</div><div class="h">THU</div><div class="h">FRI</div><div class="h">SAT</div><div class="h">SUN</div>
+            <div class="h">Mon</div><div class="h">Tue</div><div class="h">Wed</div><div class="h">Thu</div><div class="h">Fri</div><div class="h">Sat</div><div class="h">Sun</div>
         </div>
     </div>
 
     <script>
-        const url = 'https://p108-caldav.icloud.com/published/2/MTUxMDYwNTYxNDE1MTA2MOcLt9DeC6aDOBzlZCUDejDdugx2IBT9HDhJA6jGIXwDHsR2_c0JH71EnIqBSkhBPTX-OE44UuANI0LecwDIOcg';
-        const proxy = 'https://corsproxy.io/?' + encodeURIComponent(url);
+        const icalUrl = 'https://p108-caldav.icloud.com/published/2/MTUxMDYwNTYxNDE1MTA2MOcLt9DeC6aDOBzlZCUDejDdugx2IBT9HDhJA6jGIXwDHsR2_c0JH71EnIqBSkhBPTX-OE44UuANI0LecwDIOcg';
+        const proxy = 'https://corsproxy.io/?' + encodeURIComponent(icalUrl);
 
-        const now = new Date();
-        const year = now.getFullYear(), month = now.getMonth();
-        const startOfMonth = new Date(year, month, 1);
-        const endOfMonth = new Date(year, month + 1, 0);
+        function setupGrid() {
+            const now = new Date();
+            const year = now.getFullYear();
+            const month = now.getMonth();
+            document.getElementById('month-label').innerText = now.toLocaleString('en-GB', { month: 'long', year: 'numeric' });
 
-        function buildGrid() {
-            document.getElementById('m-label').innerText = now.toLocaleString('en-GB', {month:'long', year:'numeric'});
-            let offset = (startOfMonth.getDay() + 6) % 7; 
+            const first = new Date(year, month, 1);
+            let offset = first.getDay() - 1; if (offset === -1) offset = 6;
             const grid = document.getElementById('g');
-            grid.querySelectorAll('.c').forEach(e => e.remove()); // Clear old cells
 
             for (let i = 0; i < 42; i++) {
                 const d = new Date(year, month, 1 - offset + i);
                 const cell = document.createElement('div');
                 cell.className = 'c' + (d.getMonth() !== month ? ' off' : '') + (d.toDateString() === now.toDateString() ? ' today' : '');
-                cell.id = 'idx-' + d.toISOString().split('T')[0].replace(/-/g, '');
+                cell.id = 'd-' + d.toDateString();
                 cell.innerHTML = `<div class="num">${d.getDate()}</div><div class="events"></div>`;
                 grid.appendChild(cell);
             }
         }
 
-        function loadFromStorage() {
-            const cache = localStorage.getItem('cal_cache');
-            if (cache) {
-                const data = JSON.parse(cache);
-                // Only use cache if it's for the current month
-                if (data.month === month && data.year === year) {
-                    data.events.forEach(ev => drawEvent(ev.id, ev.title));
-                }
-            }
-        }
-
-        function fetchEvents() {
-            fetch(proxy)
-                .then(res => res.ok ? res.text() : null)
-                .then(text => {
-                    if (!text) return;
-                    const raw = text.replace(/\r?\n[ \t]/g, '');
-                    const eventBlocks = raw.match(/BEGIN:VEVENT[\s\S]*?END:VEVENT/g) || [];
+        async function loadEvents() {
+            try {
+                const res = await fetch(proxy);
+                const text = await res.text();
+                // Wrap parsing in a micro-task so the grid paints first
+                setTimeout(() => {
+                    const jcal = ICAL.parse(text);
+                    const comp = new ICAL.Component(jcal);
+                    const events = comp.getAllSubcomponents('vevent');
                     
-                    const eventList = []; // Buffer to save new data
-                    
-                    // Clear current events before repopulating from fresh fetch
-                    document.querySelectorAll('.events').forEach(e => e.innerHTML = '');
-
-                    eventBlocks.forEach(block => {
-                        const summary = (block.match(/SUMMARY:(.*)/) || [])[1]?.trim() || "Event";
-                        const dtstart = block.match(/DTSTART(?:;VALUE=DATE|;TZID=.*)?:(\d{8})/);
-                        if (!dtstart) return;
-
-                        const dateStr = dtstart[1];
-                        const rrule = (block.match(/RRULE:(.*)/) || [])[1];
-
-                        if (!rrule) {
-                            eventList.push({id: dateStr, title: summary});
-                            drawEvent(dateStr, summary);
-                        } else {
-                            expand(dateStr, rrule, summary, eventList);
+                    events.forEach(ve => {
+                        const ev = new ICAL.Event(ve);
+                        const key = 'd-' + ev.startDate.toJSDate().toDateString();
+                        const cell = document.getElementById(key);
+                        if (cell) {
+                            const container = cell.querySelector('.events');
+                            const div = document.createElement('div');
+                            div.className = 'e';
+                            div.innerText = ev.summary;
+                            container.appendChild(div);
                         }
                     });
-
-                    // Save to memory
-                    localStorage.setItem('cal_cache', JSON.stringify({
-                        month: month,
-                        year: year,
-                        events: eventList
-                    }));
-                })
-                .catch(err => console.log("Fetch Error"));
+                }, 10);
+            } catch (e) { console.error("Sync Error"); }
         }
 
-        function expand(dateStr, rrule, summary, eventList) {
-            let sY = parseInt(dateStr.substring(0,4)), sM = parseInt(dateStr.substring(4,6))-1, sD = parseInt(dateStr.substring(6,8));
-            let curr = new Date(sY, sM, sD);
-            for (let i = 0; i < 400; i++) {
-                if (curr > endOfMonth) break;
-                if (curr >= startOfMonth) {
-                    const id = curr.toISOString().split('T')[0].replace(/-/g, '');
-                    eventList.push({id: id, title: summary});
-                    drawEvent(id, summary);
-                }
-                if (rrule.includes("FREQ=DAILY")) curr.setDate(curr.getDate() + 1);
-                else if (rrule.includes("FREQ=WEEKLY")) curr.setDate(curr.getDate() + 7);
-                else if (rrule.includes("FREQ=MONTHLY")) curr.setMonth(curr.getMonth() + 1);
-                else if (rrule.includes("FREQ=YEARLY")) curr.setFullYear(curr.getFullYear() + 1);
-                else break;
-            }
-        }
-
-        function drawEvent(id, text) {
-            const cell = document.getElementById('idx-' + id);
-            if (cell) {
-                const div = document.createElement('div');
-                div.className = 'e';
-                div.innerText = text.replace(/\\,/g, ',');
-                cell.querySelector('.events').appendChild(div);
-            }
-        }
-
-        buildGrid();
-        loadFromStorage(); // Instant load from memory
-        fetchEvents();     // Background update
-
-        // Refresh every 30 minutes
-        setInterval(fetchEvents, 1800000);
+        // Run setup immediately, then load events after a frame
+        setupGrid();
+        requestAnimationFrame(() => {
+            loadEvents();
+        });
     </script>
 </body>
 </html>
