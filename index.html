@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Kindle 24h Dashboard</title>
+    <title>Kindle Dashboard</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/ical.js/1.5.0/ical.min.js"></script>
     <style>
         :root { --bg: #fff; --text: #000; --gray: #d0d0d0; }
@@ -14,52 +14,73 @@
             font-family: "Helvetica", Arial, sans-serif; overflow: hidden;
         }
         .container { display: flex; flex-direction: column; width: 100vw; height: 100vh; }
-        header { height: 10vh; display: flex; justify-content: space-between; align-items: center; padding: 0 2vw; border-bottom: 4px solid #000; }
-        .h-left { display: flex; align-items: center; gap: 5px; width: 20%; }
-        .h-center { display: flex; justify-content: center; align-items: center; gap: 8px; flex: 1; }
-        .h-right { width: 20%; }
-        .btn { border: 2px solid #000; background: #fff; padding: 4px 10px; font-size: 1.6vh; font-weight: bold; border-radius: 4px; cursor: pointer; }
+        
+        header { 
+            height: 10vh; display: flex; align-items: center; 
+            padding: 0 2vw; border-bottom: 4px solid #000; 
+        }
+
+        .h-left { width: 25%; display: flex; align-items: center; justify-content: flex-start; gap: 6px; }
+        .h-center { width: 50%; display: flex; justify-content: center; align-items: center; gap: 8px; }
+        .h-right { width: 25%; display: flex; justify-content: flex-end; align-items: center; }
+
+        #month-label, #day-title, #grid-year-label { 
+            font-size: 2.2vh; 
+            font-weight: 900; 
+            min-width: 70px; 
+            text-align: center; 
+        }
+
+        .btn { border: 2px solid #000; background: #fff; padding: 5px 12px; font-size: 1.8vh; font-weight: bold; border-radius: 4px; cursor: pointer; display: flex; align-items: center; }
         .btn.active { background: #000; color: #fff; }
-        #month-label { font-size: 2vh; font-weight: 900; min-width: 60px; text-align: center; }
 
         /* Grid View */
         #grid-view { display: flex; flex-wrap: wrap; flex: 1; border-left: 1px solid #000; }
         .h, .c { width: 14.285%; border-right: 1px solid #000; border-bottom: 1px solid #000; }
         .h { background: #000; color: #fff; height: 3.5vh; line-height: 3.5vh; text-align: center; font-size: 1.4vh; font-weight: bold; }
-        .c { height: 14.4vh; padding: 2px; cursor: pointer; overflow: hidden; }
+        .c { height: 14.4vh; padding: 2px; cursor: pointer; position: relative; }
         .c.today { background: var(--gray); box-shadow: inset 0 0 0 3px #000; }
         .c.off { color: #888; }
-        .num { font-size: 2.2vh; font-weight: 900; }
-        .e { font-size: 0.9vh; padding: 0 2px; margin-bottom: 1px; border-radius: 2px; overflow: hidden; white-space: nowrap; font-weight: bold; }
+        .num { font-size: 2.4vh; font-weight: 900; }
+
+        .e { font-size: 0.95vh; padding: 0 2px; margin-bottom: 1px; border-radius: 2px; overflow: hidden; white-space: nowrap; font-weight: bold; }
         .e-emirates { background: #000; color: #fff; }
         .e-f1 { border: 1.5px solid #000; background: #fff; color: #000; }
         .e-gym { background: #888; color: #fff; }
         .e-general { border: 1px solid #000; background: #fff; color: #000; }
         .e-events { border: 1px dashed #000; background: #fff; color: #000; }
 
-        /* Timeline (24h Full Fit) */
-        #day-view { display: none; flex: 1; position: relative; padding-left: 55px; background: #fff; height: 90vh; }
-        #timeline-content { position: relative; height: 100%; width: 100%; border-left: 2px solid #000; }
-        .time-slot { height: 3.75vh; border-bottom: 1px solid #eee; position: relative; }
-        .time-label { position: absolute; left: -50px; top: -0.8vh; font-size: 1.3vh; font-weight: 900; }
-        .visual-event { position: absolute; left: 4px; right: 10px; padding: 4px 8px; border-radius: 4px; font-weight: bold; font-size: 1.6vh; overflow: hidden; z-index: 10; }
+        /* Day View */
+        #day-view { display: none; flex: 1; position: relative; padding-left: 65px; background: #fff; height: 90vh; }
+        #timeline-content { position: relative; height: 86vh; width: 100%; border-left: 2px solid #000; margin-top: 2vh; margin-bottom: 2vh; }
+        .time-slot { height: 3.58vh; border-bottom: 1px solid #eee; position: relative; }
+        .time-label { position: absolute; left: -60px; top: -1.2vh; font-size: 1.5vh; font-weight: 900; }
+        
+        .visual-event { position: absolute; left: 5px; right: 15px; padding: 4px 10px; border-radius: 4px; font-weight: bold; font-size: 1.7vh; overflow: hidden; z-index: 10; border: 1px solid #000; }
         .v-emirates { background: #000; color: #fff; border: 1px solid #fff; }
-        .v-f1 { background: #fff; color: #000; border: 3px solid #000; }
+        .v-f1 { background: #fff; color: #000; border: 4px solid #000; }
         .v-gym { background: var(--gray); color: #000; border: 2px solid #000; }
         .v-general { background: #fff; color: #000; border: 2px solid #000; }
         .v-events { background: #fff; color: #000; border: 1px dashed #000; }
-        #now-line { position: absolute; left: -55px; right: 0; border-top: 2px solid #000; z-index: 100; pointer-events: none; }
-        #now-line::after { content: 'NOW'; position: absolute; left: 0; top: -1vh; font-size: 0.8vh; background: #000; color: #fff; padding: 1px 3px; }
+
+        #now-line { position: absolute; left: -65px; right: 0; border-top: 3px solid #000; z-index: 100; pointer-events: none; }
+        #now-line::after { content: 'NOW'; position: absolute; left: 0; top: -1.2vh; font-size: 1vh; background: #000; color: #fff; padding: 1px 4px; }
+        
+        .day-nav { display: flex; align-items: center; gap: 8px; }
     </style>
 </head>
 <body>
     <div class="container">
-        <header id="header-main">
-            <div class="h-left" id="nav-group">
-                <button class="btn" onclick="changeMonth(-1)">&lt;</button>
-                <div id="month-label">---</div>
-                <button class="btn" onclick="changeMonth(1)">&gt;</button>
+        <header>
+            <div class="h-left">
+                <div id="grid-nav-left" style="display: flex; align-items: center; gap: 6px;">
+                    <button class="btn" onclick="changeMonth(-1)">&lt;</button>
+                    <div id="month-label">JAN</div>
+                    <button class="btn" onclick="changeMonth(1)">&gt;</button>
+                </div>
+                <button id="day-back-btn" class="btn" style="display:none;" onclick="showGrid()">&larr; BACK</button>
             </div>
+            
             <div class="h-center">
                 <button class="btn" onclick="goToday()">Today</button>
                 <button id="btn-emirates" class="btn active" onclick="toggleCal('emirates')"><span>&#9992;</span></button>
@@ -68,80 +89,53 @@
                 <button id="btn-general" class="btn active" onclick="toggleCal('general')"><span>&#128197;</span></button>
                 <button id="btn-events" class="btn active" onclick="toggleCal('events')"><span>&#9733;</span></button>
             </div>
-            <div class="h-right"></div>
-            <div id="header-back" style="display:none; width: 100%; justify-content: space-between; align-items: center;">
-                <button class="btn" onclick="showGrid()">&larr; BACK</button>
-                <div id="day-title" style="font-weight: 900; font-size: 2.2vh;"></div>
-                <div style="width: 50px;"></div>
+
+            <div class="h-right">
+                <div id="grid-year-label">2026</div>
+                <div id="day-nav-right" class="day-nav" style="display:none;">
+                    <button class="btn" onclick="changeDay(-1)">&lt;</button>
+                    <div id="day-title"></div>
+                    <button class="btn" onclick="changeDay(1)">&gt;</button>
+                </div>
             </div>
         </header>
+
         <div id="grid-view"></div>
         <div id="day-view"><div id="timeline-content"></div></div>
     </div>
 
     <script>
-        let currentViewDate = new Date();
+        let currentViewDate = new Date(); 
+        let activeDate = new Date();      
         let eventsData = [];
+        let isDayView = false;
 
         const cals = {
-            emirates: { vclass: 'v-emirates', class: 'e-emirates', active: true, url: 'https://corsproxy.io/?' + encodeURIComponent('https://p108-caldav.icloud.com/published/2/MTUxMDYwNTYxNDE1MTA2MOcLt9DeC6aDOBzlZCUDejDdugx2IBT9HDhJA6jGIXwDHsR2_c0JH71EnIqBSkhBPTX-OE44UuANI0LecwDIOcg') },
-            f1: { vclass: 'v-f1', class: 'e-f1', active: true, url: 'https://ics.ecal.com/ecal-sub/6978b519f1acee000262a2b5/Formula%201.ics' },
-            gym: { vclass: 'v-gym', class: 'e-gym', active: true, url: 'https://corsproxy.io/?' + encodeURIComponent('https://p108-caldav.icloud.com/published/2/MTUxMDYwNTYxNDE1MTA2MOcLt9DeC6aDOBzlZCUDejCL3fRwC3w7_mzL3_OzVt5xXm88tIzh3qgFHJqjiRhVjSDzbucjBF_kBWkdH5h3GYM') },
-            general: { vclass: 'v-general', class: 'e-general', active: true, url: 'https://corsproxy.io/?' + encodeURIComponent('https://p108-caldav.icloud.com/published/2/MTUxMDYwNTYxNDE1MTA2MOcLt9DeC6aDOBzlZCUDejDpnQfC9Rt0jcQ8mXcqZI9uoBQUclzf0cJWZvsJvowycAYCN-jcI-u2d_Fsl8dc6iY') },
-            events: { vclass: 'v-events', class: 'e-events', active: true, url: 'https://corsproxy.io/?' + encodeURIComponent('https://p108-caldav.icloud.com/published/2/MTUxMDYwNTYxNDE1MTA2MOcLt9DeC6aDOBzlZCUDejABSjeamivf19HX8FEgkAyRgYd0IMY3MO_0GRxsu86fk6MT7DF_zxeaA-16lHQc6So') }
+            emirates: { active: true, url: 'https://p108-caldav.icloud.com/published/2/MTUxMDYwNTYxNDE1MTA2MOcLt9DeC6aDOBzlZCUDejDdugx2IBT9HDhJA6jGIXwDHsR2_c0JH71EnIqBSkhBPTX-OE44UuANI0LecwDIOcg' },
+            f1: { active: true, url: 'https://ics.ecal.com/ecal-sub/6978b519f1acee000262a2b5/Formula%201.ics' },
+            gym: { active: true, url: 'https://p108-caldav.icloud.com/published/2/MTUxMDYwNTYxNDE1MTA2MOcLt9DeC6aDOBzlZCUDejCL3fRwC3w7_mzL3_OzVt5xXm88tIzh3qgFHJqjiRhVjSDzbucjBF_kBWkdH5h3GYM' },
+            general: { active: true, url: 'https://p108-caldav.icloud.com/published/2/MTUxMDYwNTYxNDE1MTA2MOcLt9DeC6aDOBzlZCUDejDpnQfC9Rt0jcQ8mXcqZI9uoBQUclzf0cJWZvsJvowycAYCN-jcI-u2d_Fsl8dc6iY' },
+            events: { active: true, url: 'https://p108-caldav.icloud.com/published/2/MTUxMDYwNTYxNDE1MTA2MOcLt9DeC6aDOBzlZCUDejABSjeamivf19HX8FEgkAyRgYd0IMY3MO_0GRxsu86fk6MT7DF_zxeaA-16lHQc6So' }
         };
 
-        // Helper to get YYYY-MM-DD from a local date object
-        function getLocalISO(date) {
-            return date.getFullYear() + '-' + String(date.getMonth() + 1).padStart(2, '0') + '-' + String(date.getDate()).padStart(2, '0');
-        }
+        const calMeta = {
+            emirates: { vclass: 'v-emirates', eclass: 'e-emirates' },
+            f1: { vclass: 'v-f1', eclass: 'e-f1' },
+            gym: { vclass: 'v-gym', eclass: 'e-gym' },
+            general: { vclass: 'v-general', eclass: 'e-general' },
+            events: { vclass: 'v-events', eclass: 'e-events' }
+        };
 
-        function buildTimeline() {
-            const content = document.getElementById('timeline-content');
-            content.innerHTML = '<div id="now-line" style="display:none;"></div>';
-            for(let i=0; i < 24; i++) {
-                content.innerHTML += `<div class="time-slot"><div class="time-label">${(i < 10 ? '0'+i : i)}:00</div></div>`;
-            }
-        }
-
-        function showTimeline(dateStr, formatted) {
-            document.getElementById('grid-view').style.display = 'none';
-            document.getElementById('nav-group').style.display = 'none';
-            document.querySelector('.h-center').style.display = 'none';
-            document.getElementById('day-view').style.display = 'block';
-            document.getElementById('header-back').style.display = 'flex';
-            document.getElementById('day-title').innerText = formatted.toUpperCase();
-
-            document.querySelectorAll('.visual-event').forEach(e => e.remove());
-            const now = new Date(), pxPerMin = (90 / 1440);
-
-            if (dateStr === getLocalISO(now)) {
-                const elapsedMins = now.getHours() * 60 + now.getMinutes();
-                document.getElementById('now-line').style.top = (elapsedMins * pxPerMin) + 'vh';
-                document.getElementById('now-line').style.display = 'block';
-            } else {
-                document.getElementById('now-line').style.display = 'none';
-            }
-
-            eventsData.filter(e => e.dateStr === dateStr).forEach(ev => {
-                const startMins = ev.start.getHours() * 60 + ev.start.getMinutes();
-                const durationMins = (ev.end - ev.start) / 60000;
-                const el = document.createElement('div');
-                el.className = 'visual-event ' + cals[ev.cal].vclass;
-                el.style.top = (startMins * pxPerMin) + 'vh';
-                el.style.height = (durationMins * pxPerMin) + 'vh';
-                el.style.minHeight = "1.2vh";
-                el.innerHTML = ev.title;
-                document.getElementById('timeline-content').appendChild(el);
-            });
-        }
+        function getLocalISO(d) { return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); }
 
         function buildGrid() {
             const grid = document.getElementById('grid-view'); grid.innerHTML = '';
             document.getElementById('month-label').innerText = currentViewDate.toLocaleString('default', { month: 'short' }).toUpperCase();
+            document.getElementById('grid-year-label').innerText = currentViewDate.getFullYear();
             ['M', 'T', 'W', 'T', 'F', 'S', 'S'].forEach(d => grid.innerHTML += `<div class="h">${d}</div>`);
-            const start = new Date(currentViewDate.getFullYear(), currentViewDate.getMonth(), 1);
-            let offset = start.getDay() - 1; if (offset === -1) offset = 6;
+            
+            const startMonth = new Date(currentViewDate.getFullYear(), currentViewDate.getMonth(), 1);
+            let offset = startMonth.getDay() - 1; if (offset === -1) offset = 6;
             const todayStr = getLocalISO(new Date());
 
             for (let i = 0; i < 42; i++) {
@@ -149,57 +143,119 @@
                 const dStr = getLocalISO(d);
                 const cell = document.createElement('div');
                 cell.className = 'c' + (d.getMonth() !== currentViewDate.getMonth() ? ' off' : '') + (dStr === todayStr ? ' today' : '');
-                cell.id = 'date-' + dStr;
-                cell.onclick = () => showTimeline(dStr, d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' }));
+                cell.onclick = () => { activeDate = new Date(d); showTimeline(); };
                 cell.innerHTML = `<div class="num">${d.getDate()}</div><div class="events-container" id="ec-${dStr}"></div>`;
                 grid.appendChild(cell);
             }
+            renderEvents();
+        }
+
+        function renderEvents() {
+            document.querySelectorAll('.events-container').forEach(el => el.innerHTML = '');
+            eventsData.forEach(ev => {
+                if (cals[ev.cal].active) {
+                    const container = document.getElementById('ec-' + ev.dateStr);
+                    if (container) {
+                        const div = document.createElement('div');
+                        div.className = `e ${calMeta[ev.cal].eclass}`;
+                        div.innerText = ev.title;
+                        container.appendChild(div);
+                    }
+                }
+            });
+            if (isDayView) showTimeline();
         }
 
         function fetchCal(key) {
+            const cacheBust = new Date().getTime();
+            const proxyUrl = 'https://corsproxy.io/?' + encodeURIComponent(cals[key].url + '?t=' + cacheBust);
             const xhr = new XMLHttpRequest();
-            xhr.open('GET', cals[key].url, true);
+            xhr.open('GET', proxyUrl, true);
             xhr.onreadystatechange = function() {
                 if (xhr.readyState === 4 && xhr.status === 200) {
-                    try {
-                        const jcal = ICAL.parse(xhr.responseText);
-                        const events = new ICAL.Component(jcal).getAllSubcomponents('vevent');
-                        events.forEach(ve => {
-                            const ev = new ICAL.Event(ve);
-                            const s = ev.startDate.toJSDate(), e = ev.endDate.toJSDate();
-                            const dStr = getLocalISO(s);
-                            eventsData.push({ dateStr: dStr, start: s, end: e, title: ev.summary, cal: key });
-                            const container = document.getElementById('ec-' + dStr);
-                            if (container) {
-                                const div = document.createElement('div');
-                                div.className = `e ${cals[key].class}`;
-                                div.innerText = ev.summary;
-                                container.appendChild(div);
-                            }
-                        });
-                    } catch(err) {}
+                    const jcal = ICAL.parse(xhr.responseText);
+                    const comp = new ICAL.Component(jcal);
+                    comp.getAllSubcomponents('vevent').forEach(ve => {
+                        const event = new ICAL.Event(ve);
+                        const s = event.startDate.toJSDate(), e = event.endDate.toJSDate();
+                        let curr = new Date(s);
+                        while (curr <= e) {
+                            eventsData.push({ dateStr: getLocalISO(curr), start: s, end: e, title: event.summary, cal: key });
+                            curr.setDate(curr.getDate() + 1);
+                        }
+                    });
+                    buildGrid();
                 }
             };
             xhr.send();
         }
 
-        function showGrid() { 
-            document.getElementById('grid-view').style.display = 'flex'; 
-            document.getElementById('nav-group').style.display = 'flex';
-            document.querySelector('.h-center').style.display = 'flex';
-            document.getElementById('day-view').style.display = 'none'; 
-            document.getElementById('header-back').style.display = 'none'; 
+        function showTimeline() {
+            isDayView = true;
+            document.getElementById('grid-nav-left').style.display = 'none';
+            document.getElementById('grid-year-label').style.display = 'none';
+            document.getElementById('day-back-btn').style.display = 'flex';
+            document.getElementById('day-nav-right').style.display = 'flex';
+            document.getElementById('grid-view').style.display = 'none';
+            document.getElementById('day-view').style.display = 'block';
+
+            const formatted = activeDate.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' }).toUpperCase();
+            document.getElementById('day-title').innerText = formatted;
+
+            document.querySelectorAll('.visual-event').forEach(e => e.remove());
+            const pxPerMin = (86 / 1440);
+            
+            eventsData.filter(e => e.dateStr === getLocalISO(activeDate) && cals[e.cal].active).forEach(ev => {
+                const startMins = ev.start.getHours() * 60 + ev.start.getMinutes();
+                const durationMins = Math.max(30, (ev.end - ev.start) / 60000);
+                const el = document.createElement('div');
+                el.className = 'visual-event ' + calMeta[ev.cal].vclass;
+                el.style.top = (startMins * pxPerMin) + 'vh';
+                el.style.height = (durationMins * pxPerMin) + 'vh';
+                el.innerHTML = ev.title;
+                document.getElementById('timeline-content').appendChild(el);
+            });
+            updateNowLine();
         }
 
-        function changeMonth(v) { currentViewDate.setMonth(currentViewDate.getMonth()+v); buildGrid(); refreshAll(); }
-        function goToday() { currentViewDate = new Date(); buildGrid(); refreshAll(); }
-        function toggleCal(k) { cals[k].active = !cals[k].active; document.getElementById('btn-'+k).classList.toggle('active'); refreshAll(); }
-        function refreshAll() {
-            eventsData = []; document.querySelectorAll('.events-container').forEach(e => e.innerHTML='');
-            for(let k in cals) if(cals[k].active) fetchCal(k);
+        function updateNowLine() {
+            const now = new Date();
+            const line = document.getElementById('now-line');
+            if (isDayView && getLocalISO(activeDate) === getLocalISO(now) && line) {
+                const pxPerMin = (86 / 1440);
+                line.style.top = ((now.getHours() * 60 + now.getMinutes()) * pxPerMin) + 'vh';
+                line.style.display = 'block';
+            } else if (line) {
+                line.style.display = 'none';
+            }
         }
+
+        function showGrid() { 
+            isDayView = false;
+            document.getElementById('day-back-btn').style.display = 'none';
+            document.getElementById('day-nav-right').style.display = 'none';
+            document.getElementById('grid-nav-left').style.display = 'flex';
+            document.getElementById('grid-year-label').style.display = 'block';
+            document.getElementById('day-view').style.display = 'none'; 
+            document.getElementById('grid-view').style.display = 'flex';
+            buildGrid();
+        }
+
+        function changeDay(v) { activeDate.setDate(activeDate.getDate() + v); showTimeline(); }
+        function changeMonth(v) { currentViewDate.setMonth(currentViewDate.getMonth() + v); buildGrid(); }
+        function goToday() { currentViewDate = new Date(); activeDate = new Date(); if (isDayView) showTimeline(); else buildGrid(); }
+        function toggleCal(k) { cals[k].active = !cals[k].active; document.getElementById('btn-'+k).classList.toggle('active'); renderEvents(); }
+        
+        function buildTimeline() {
+            const content = document.getElementById('timeline-content');
+            content.innerHTML = '<div id="now-line" style="display:none;"></div>';
+            for(let i=0; i < 24; i++) content.innerHTML += `<div class="time-slot"><div class="time-label">${(i < 10 ? '0'+i : i)}:00</div></div>`;
+        }
+
+        function refreshAll() { eventsData = []; for (let k in cals) fetchCal(k); }
 
         buildTimeline(); buildGrid(); refreshAll();
+        setInterval(updateNowLine, 60000);
     </script>
 </body>
 </html>
