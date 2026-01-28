@@ -84,9 +84,9 @@
             <div class="h-center">
                 <button class="btn" onclick="goToday()">Today</button>
                 <button id="btn-emirates" class="btn active" onclick="toggleCal('emirates')"><span>✈︎</span></button>
-                <button id="btn-f1" class="btn active" onclick="toggleCal('f1')"><span>⛐</span></button>
-                <button id="btn-gym" class="btn active" onclick="toggleCal('gym')"><span>𖥸</span></button>
-                <button id="btn-general" class="btn active" onclick="toggleCal('general')"><span>𖨆</span></button>
+                <button id="btn-f1" class="btn active" onclick="toggleCal('f1')"><span>F1</span></button>
+                <button id="btn-gym" class="btn active" onclick="toggleCal('gym')"><span>❀</span></button>
+                <button id="btn-general" class="btn active" onclick="toggleCal('general')"><span>☻</span></button>
                 <button id="btn-events" class="btn active" onclick="toggleCal('events')"><span>♪</span></button>
             </div>
 
@@ -109,7 +109,7 @@
         let activeDate = new Date();      
         let eventsData = [];
         let isDayView = false;
-        const KINDLE_OFFSET_HOURS = 4; // Offsets 4h discrepancy
+        const KINDLE_OFFSET_HOURS = 4; // Shift events +4h to fix Kindle discrepancy
 
         const cals = {
             emirates: { active: true, url: 'https://p108-caldav.icloud.com/published/2/MTUxMDYwNTYxNDE1MTA2MOcLt9DeC6aDOBzlZCUDejDdugx2IBT9HDhJA6jGIXwDHsR2_c0JH71EnIqBSkhBPTX-OE44UuANI0LecwDIOcg' },
@@ -181,7 +181,7 @@
                         let s = event.startDate.toJSDate();
                         let e = event.endDate.toJSDate();
                         
-                        // Shift forward to match actual time
+                        // Apply 4h shift
                         s.setHours(s.getHours() + KINDLE_OFFSET_HOURS);
                         e.setHours(e.getHours() + KINDLE_OFFSET_HOURS);
 
