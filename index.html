@@ -21,21 +21,19 @@
         }
 
         .h-left { width: 20%; display: flex; align-items: center; justify-content: flex-start; gap: 10px; }
-        .h-center { width: 60%; display: flex; justify-content: center; align-items: center; gap: 15px; } /* Increased gap here */
-        .h-right { width: 20%; display: flex; justify-content: flex-end; align-items: center; }
+        .h-center { width: 60%; display: flex; justify-content: center; align-items: center; gap: 12px; }
+        .h-right { width: 20%; display: flex; justify-content: flex-end; align-items: center; gap: 10px; }
 
         #month-label, #day-title, #grid-year-label { 
-            font-size: 2.2vh; 
+            font-size: 2vh; 
             font-weight: 900; 
-            min-width: 70px; 
+            min-width: 60px; 
             text-align: center; 
         }
 
-        .btn { border: 2px solid #000; background: #fff; padding: 6px 14px; font-size: 1.8vh; font-weight: bold; border-radius: 4px; cursor: pointer; display: flex; align-items: center; }
+        .btn { border: 2px solid #000; background: #fff; padding: 6px 12px; font-size: 1.8vh; font-weight: bold; border-radius: 4px; cursor: pointer; display: flex; align-items: center; }
         .btn.active { background: #000; color: #fff; }
-        
-        /* Spacing for the Today button specifically to separate it from filters */
-        .btn-today { margin-right: 15px; }
+        .btn-refresh { font-size: 1.4vh; padding: 4px 8px; }
 
         /* Grid View */
         #grid-view { display: flex; flex-wrap: wrap; flex: 1; border-left: 1px solid #000; }
@@ -44,24 +42,24 @@
         .c { height: 14.4vh; padding: 2px; cursor: pointer; position: relative; }
         .c.today { background: var(--gray); box-shadow: inset 0 0 0 3px #000; }
         .c.off { color: #888; }
-        .num { font-size: 2.4vh; font-weight: 900; }
+        .num { font-size: 2.2vh; font-weight: 900; }
 
-        .e { font-size: 0.95vh; padding: 0 2px; margin-bottom: 1px; border-radius: 2px; overflow: hidden; white-space: nowrap; font-weight: bold; }
+        .e { font-size: 0.9vh; padding: 0 2px; margin-bottom: 1px; border-radius: 2px; overflow: hidden; white-space: nowrap; font-weight: bold; }
         .e-emirates { background: #000; color: #fff; }
-        .e-f1 { border: 1.5px solid #000; background: #fff; color: #000; }
+        .e-f1 { border: 1.2px solid #000; background: #fff; color: #000; }
         .e-gym { background: #888; color: #fff; }
         .e-general { border: 1px solid #000; background: #fff; color: #000; }
         .e-events { border: 1px dashed #000; background: #fff; color: #000; }
 
         /* Day View */
         #day-view { display: none; flex: 1; position: relative; padding-left: 65px; background: #fff; height: 90vh; }
-        #timeline-content { position: relative; height: 86vh; width: 100%; border-left: 2px solid #000; margin-top: 2vh; margin-bottom: 2vh; }
+        #timeline-content { position: relative; height: 86vh; width: 100%; border-left: 2px solid #000; margin-top: 2vh; }
         .time-slot { height: 3.58vh; border-bottom: 1px solid #eee; position: relative; }
         .time-label { position: absolute; left: -60px; top: -1.2vh; font-size: 1.5vh; font-weight: 900; }
         
         .visual-event { position: absolute; left: 5px; right: 15px; padding: 4px 10px; border-radius: 4px; font-weight: bold; font-size: 1.7vh; overflow: hidden; z-index: 10; border: 1px solid #000; }
         .v-emirates { background: #000; color: #fff; border: 1px solid #fff; }
-        .v-f1 { background: #fff; color: #000; border: 4px solid #000; }
+        .v-f1 { background: #fff; color: #000; border: 3px solid #000; }
         .v-gym { background: var(--gray); color: #000; border: 2px solid #000; }
         .v-general { background: #fff; color: #000; border: 2px solid #000; }
         .v-events { background: #fff; color: #000; border: 1px dashed #000; }
@@ -69,14 +67,14 @@
         #now-line { position: absolute; left: -65px; right: 0; border-top: 3px solid #000; z-index: 100; pointer-events: none; }
         #now-line::after { content: 'NOW'; position: absolute; left: 0; top: -1.2vh; font-size: 1vh; background: #000; color: #fff; padding: 1px 4px; }
         
-        .day-nav { display: flex; align-items: center; gap: 15px; } /* Increased gap for day navigation */
+        .day-nav { display: flex; align-items: center; gap: 12px; }
     </style>
 </head>
 <body>
     <div class="container">
         <header>
             <div class="h-left">
-                <div id="grid-nav-left" style="display: flex; align-items: center; gap: 10px;">
+                <div id="grid-nav-left" style="display: flex; align-items: center; gap: 8px;">
                     <button class="btn" onclick="changeMonth(-1)">&lt;</button>
                     <div id="month-label">JAN</div>
                     <button class="btn" onclick="changeMonth(1)">&gt;</button>
@@ -85,12 +83,12 @@
             </div>
             
             <div class="h-center">
-                <button class="btn btn-today" onclick="goToday()">Today</button>
-                <button id="btn-emirates" class="btn active" onclick="toggleCal('emirates')"><span>✈︎</span></button>
-                <button id="btn-f1" class="btn active" onclick="toggleCal('f1')"><span>F1</span></button>
-                <button id="btn-gym" class="btn active" onclick="toggleCal('gym')"><span>❀</span></button>
-                <button id="btn-general" class="btn active" onclick="toggleCal('general')"><span>☻</span></button>
-                <button id="btn-events" class="btn active" onclick="toggleCal('events')"><span>♪</span></button>
+                <button class="btn" style="margin-right:10px" onclick="goToday()">Today</button>
+                <button id="btn-emirates" class="btn active" onclick="toggleCal('emirates')">✈︎</button>
+                <button id="btn-f1" class="btn active" onclick="toggleCal('f1')">F1</button>
+                <button id="btn-gym" class="btn active" onclick="toggleCal('gym')">❀</button>
+                <button id="btn-general" class="btn active" onclick="toggleCal('general')">☻</button>
+                <button id="btn-events" class="btn active" onclick="toggleCal('events')">♪</button>
             </div>
 
             <div class="h-right">
@@ -100,6 +98,7 @@
                     <div id="day-title"></div>
                     <button class="btn" onclick="changeDay(1)">&gt;</button>
                 </div>
+                <button class="btn btn-refresh" onclick="location.reload()">↻</button>
             </div>
         </header>
 
@@ -108,11 +107,14 @@
     </div>
 
     <script>
-        let currentViewDate = new Date(); 
-        let activeDate = new Date();      
+        // --- CONFIGURATION ---
+        const KINDLE_TIME_OFFSET = 4; // Change this to 8 or -4 if the time is still wrong
+        // ---------------------
+
+        let currentViewDate = getCorrectedNow(); 
+        let activeDate = getCorrectedNow();      
         let eventsData = [];
         let isDayView = false;
-        const KINDLE_OFFSET_HOURS = 4;
 
         const cals = {
             emirates: { active: true, url: 'https://p108-caldav.icloud.com/published/2/MTUxMDYwNTYxNDE1MTA2MOcLt9DeC6aDOBzlZCUDejDdugx2IBT9HDhJA6jGIXwDHsR2_c0JH71EnIqBSkhBPTX-OE44UuANI0LecwDIOcg' },
@@ -130,7 +132,15 @@
             events: { vclass: 'v-events', eclass: 'e-events' }
         };
 
-        function getLocalISO(d) { return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); }
+        function getCorrectedNow() {
+            let d = new Date();
+            d.setHours(d.getHours() + KINDLE_TIME_OFFSET);
+            return d;
+        }
+
+        function getLocalISO(d) { 
+            return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); 
+        }
 
         function buildGrid() {
             const grid = document.getElementById('grid-view'); grid.innerHTML = '';
@@ -140,7 +150,7 @@
             
             const startMonth = new Date(currentViewDate.getFullYear(), currentViewDate.getMonth(), 1);
             let offset = startMonth.getDay() - 1; if (offset === -1) offset = 6;
-            const todayStr = getLocalISO(new Date());
+            const todayStr = getLocalISO(getCorrectedNow());
 
             for (let i = 0; i < 42; i++) {
                 const d = new Date(currentViewDate.getFullYear(), currentViewDate.getMonth(), 1 - offset + i);
@@ -184,8 +194,8 @@
                         let s = event.startDate.toJSDate();
                         let e = event.endDate.toJSDate();
                         
-                        s.setHours(s.getHours() + KINDLE_OFFSET_HOURS);
-                        e.setHours(e.getHours() + KINDLE_OFFSET_HOURS);
+                        s.setHours(s.getHours() + KINDLE_TIME_OFFSET);
+                        e.setHours(e.getHours() + KINDLE_TIME_OFFSET);
 
                         let curr = new Date(s);
                         const endTracker = new Date(e);
@@ -235,7 +245,7 @@
         }
 
         function updateNowLine() {
-            const now = new Date();
+            const now = getCorrectedNow();
             const line = document.getElementById('now-line');
             if (isDayView && getLocalISO(activeDate) === getLocalISO(now) && line) {
                 const pxPerMin = (86 / 1440);
@@ -259,7 +269,7 @@
 
         function changeDay(v) { activeDate.setDate(activeDate.getDate() + v); showTimeline(); }
         function changeMonth(v) { currentViewDate.setMonth(currentViewDate.getMonth() + v); buildGrid(); }
-        function goToday() { currentViewDate = new Date(); activeDate = new Date(); if (isDayView) showTimeline(); else buildGrid(); }
+        function goToday() { currentViewDate = getCorrectedNow(); activeDate = getCorrectedNow(); if (isDayView) showTimeline(); else buildGrid(); }
         function toggleCal(k) { cals[k].active = !cals[k].active; document.getElementById('btn-'+k).classList.toggle('active'); renderEvents(); }
         
         function buildTimeline() {
