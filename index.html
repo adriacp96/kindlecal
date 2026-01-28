@@ -20,9 +20,9 @@
             padding: 0 2vw; border-bottom: 4px solid #000; 
         }
 
-        .h-left { width: 20%; display: flex; align-items: center; justify-content: flex-start; gap: 10px; }
-        .h-center { width: 60%; display: flex; justify-content: center; align-items: center; gap: 12px; }
-        .h-right { width: 20%; display: flex; justify-content: flex-end; align-items: center; gap: 10px; }
+        .h-left { width: 25%; display: flex; align-items: center; justify-content: flex-start; gap: 10px; }
+        .h-center { width: 50%; display: flex; justify-content: center; align-items: center; gap: 12px; }
+        .h-right { width: 25%; display: flex; justify-content: flex-end; align-items: center; gap: 10px; }
 
         #month-label, #day-title, #grid-year-label { 
             font-size: 2vh; 
@@ -64,9 +64,7 @@
         .v-events { background: #fff; color: #000; border: 1px dashed #000; }
 
         #now-line { position: absolute; left: -65px; right: 0; border-top: 3px solid #000; z-index: 100; pointer-events: none; }
-        
-        /* Debug Clock */
-        #debug-clock { position: fixed; bottom: 5px; right: 5px; font-size: 1.2vh; font-weight: bold; background: #fff; border: 1px solid #000; padding: 2px 5px; z-index: 1000; }
+        #now-line::after { content: 'NOW'; position: absolute; left: 0; top: -1.2vh; font-size: 1vh; background: #000; color: #fff; padding: 1px 4px; }
 
         .day-nav { display: flex; align-items: center; gap: 12px; }
     </style>
@@ -99,7 +97,6 @@
                     <div id="day-title"></div>
                     <button class="btn" onclick="changeDay(1)">&gt;</button>
                 </div>
-                <button class="btn" style="font-size: 1.4vh;" onclick="location.reload()">↻</button>
             </div>
         </header>
 
@@ -107,11 +104,16 @@
         <div id="day-view"><div id="timeline-content"></div></div>
     </div>
 
-    <div id="debug-clock">00:00</div>
-
     <script>
-        let currentViewDate = new Date(); 
-        let activeDate = new Date();      
+        // Adjust for Kindle's internal 4h lag relative to Dubai
+        function getDubaiNow() {
+            let d = new Date();
+            d.setHours(d.getHours() + 4);
+            return d;
+        }
+
+        let currentViewDate = getDubaiNow(); 
+        let activeDate = getDubaiNow();      
         let eventsData = [];
         let isDayView = false;
 
@@ -143,7 +145,7 @@
             
             const startMonth = new Date(currentViewDate.getFullYear(), currentViewDate.getMonth(), 1);
             let offset = startMonth.getDay() - 1; if (offset === -1) offset = 6;
-            const todayStr = getLocalISO(new Date());
+            const todayStr = getLocalISO(getDubaiNow());
 
             for (let i = 0; i < 42; i++) {
                 const d = new Date(currentViewDate.getFullYear(), currentViewDate.getMonth(), 1 - offset + i);
@@ -235,9 +237,7 @@
         }
 
         function updateNowLine() {
-            const now = new Date();
-            document.getElementById('debug-clock').innerText = now.getHours().toString().padStart(2, '0') + ":" + now.getMinutes().toString().padStart(2, '0');
-            
+            const now = getDubaiNow();
             const line = document.getElementById('now-line');
             if (isDayView && getLocalISO(activeDate) === getLocalISO(now) && line) {
                 const pxPerMin = (86 / 1440);
@@ -261,7 +261,7 @@
 
         function changeDay(v) { activeDate.setDate(activeDate.getDate() + v); showTimeline(); }
         function changeMonth(v) { currentViewDate.setMonth(currentViewDate.getMonth() + v); buildGrid(); }
-        function goToday() { currentViewDate = new Date(); activeDate = new Date(); if (isDayView) showTimeline(); else buildGrid(); }
+        function goToday() { currentViewDate = getDubaiNow(); activeDate = getDubaiNow(); if (isDayView) showTimeline(); else buildGrid(); }
         function toggleCal(k) { cals[k].active = !cals[k].active; document.getElementById('btn-'+k).classList.toggle('active'); renderEvents(); }
         
         function buildTimeline() {
@@ -274,7 +274,6 @@
 
         buildTimeline(); buildGrid(); refreshAll();
         setInterval(updateNowLine, 60000);
-        updateNowLine();
     </script>
 </body>
 </html>
