@@ -20,9 +20,9 @@
             padding: 0 2vw; border-bottom: 4px solid #000; 
         }
 
-        .h-left { width: 25%; display: flex; align-items: center; justify-content: flex-start; gap: 6px; }
-        .h-center { width: 50%; display: flex; justify-content: center; align-items: center; gap: 8px; }
-        .h-right { width: 25%; display: flex; justify-content: flex-end; align-items: center; }
+        .h-left { width: 20%; display: flex; align-items: center; justify-content: flex-start; gap: 10px; }
+        .h-center { width: 60%; display: flex; justify-content: center; align-items: center; gap: 15px; } /* Increased gap here */
+        .h-right { width: 20%; display: flex; justify-content: flex-end; align-items: center; }
 
         #month-label, #day-title, #grid-year-label { 
             font-size: 2.2vh; 
@@ -31,8 +31,11 @@
             text-align: center; 
         }
 
-        .btn { border: 2px solid #000; background: #fff; padding: 5px 12px; font-size: 1.8vh; font-weight: bold; border-radius: 4px; cursor: pointer; display: flex; align-items: center; }
+        .btn { border: 2px solid #000; background: #fff; padding: 6px 14px; font-size: 1.8vh; font-weight: bold; border-radius: 4px; cursor: pointer; display: flex; align-items: center; }
         .btn.active { background: #000; color: #fff; }
+        
+        /* Spacing for the Today button specifically to separate it from filters */
+        .btn-today { margin-right: 15px; }
 
         /* Grid View */
         #grid-view { display: flex; flex-wrap: wrap; flex: 1; border-left: 1px solid #000; }
@@ -66,14 +69,14 @@
         #now-line { position: absolute; left: -65px; right: 0; border-top: 3px solid #000; z-index: 100; pointer-events: none; }
         #now-line::after { content: 'NOW'; position: absolute; left: 0; top: -1.2vh; font-size: 1vh; background: #000; color: #fff; padding: 1px 4px; }
         
-        .day-nav { display: flex; align-items: center; gap: 8px; }
+        .day-nav { display: flex; align-items: center; gap: 15px; } /* Increased gap for day navigation */
     </style>
 </head>
 <body>
     <div class="container">
         <header>
             <div class="h-left">
-                <div id="grid-nav-left" style="display: flex; align-items: center; gap: 6px;">
+                <div id="grid-nav-left" style="display: flex; align-items: center; gap: 10px;">
                     <button class="btn" onclick="changeMonth(-1)">&lt;</button>
                     <div id="month-label">JAN</div>
                     <button class="btn" onclick="changeMonth(1)">&gt;</button>
@@ -82,7 +85,7 @@
             </div>
             
             <div class="h-center">
-                <button class="btn" onclick="goToday()">Today</button>
+                <button class="btn btn-today" onclick="goToday()">Today</button>
                 <button id="btn-emirates" class="btn active" onclick="toggleCal('emirates')"><span>✈︎</span></button>
                 <button id="btn-f1" class="btn active" onclick="toggleCal('f1')"><span>F1</span></button>
                 <button id="btn-gym" class="btn active" onclick="toggleCal('gym')"><span>❀</span></button>
@@ -109,7 +112,7 @@
         let activeDate = new Date();      
         let eventsData = [];
         let isDayView = false;
-        const KINDLE_OFFSET_HOURS = 4; // Shift events +4h to fix Kindle discrepancy
+        const KINDLE_OFFSET_HOURS = 4;
 
         const cals = {
             emirates: { active: true, url: 'https://p108-caldav.icloud.com/published/2/MTUxMDYwNTYxNDE1MTA2MOcLt9DeC6aDOBzlZCUDejDdugx2IBT9HDhJA6jGIXwDHsR2_c0JH71EnIqBSkhBPTX-OE44UuANI0LecwDIOcg' },
@@ -181,7 +184,6 @@
                         let s = event.startDate.toJSDate();
                         let e = event.endDate.toJSDate();
                         
-                        // Apply 4h shift
                         s.setHours(s.getHours() + KINDLE_OFFSET_HOURS);
                         e.setHours(e.getHours() + KINDLE_OFFSET_HOURS);
 
