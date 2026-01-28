@@ -109,6 +109,8 @@
         let activeDate = new Date();      
         let eventsData = [];
         let isDayView = false;
+        // Adjust this if the Kindle time offset changes
+        const KINDLE_OFFSET_HOURS = 4;
 
         const cals = {
             emirates: { active: true, url: 'https://p108-caldav.icloud.com/published/2/MTUxMDYwNTYxNDE1MTA2MOcLt9DeC6aDOBzlZCUDejDdugx2IBT9HDhJA6jGIXwDHsR2_c0JH71EnIqBSkhBPTX-OE44UuANI0LecwDIOcg' },
@@ -177,10 +179,24 @@
                     const comp = new ICAL.Component(jcal);
                     comp.getAllSubcomponents('vevent').forEach(ve => {
                         const event = new ICAL.Event(ve);
-                        const s = event.startDate.toJSDate(), e = event.endDate.toJSDate();
+                        
+                        // Shift event times forward by 4 hours to correct Kindle display
+                        let s = event.startDate.toJSDate();
+                        let e = event.endDate.toJSDate();
+                        s.setHours(s.getHours() + KINDLE_OFFSET_HOURS);
+                        e.setHours(e.getHours() + KINDLE_OFFSET_HOURS);
+
                         let curr = new Date(s);
-                        while (curr <= e) {
-                            eventsData.push({ dateStr: getLocalISO(curr), start: s, end: e, title: event.summary, cal: key });
+                        // Ensure multi-day events are tracked correctly on the right dates after shift
+                        const endTracker = new Date(e);
+                        while (curr <= endTracker) {
+                            eventsData.push({ 
+                                dateStr: getLocalISO(curr), 
+                                start: new Date(s), 
+                                end: new Date(e), 
+                                title: event.summary, 
+                                cal: key 
+                            });
                             curr.setDate(curr.getDate() + 1);
                         }
                     });
@@ -223,6 +239,8 @@
             const line = document.getElementById('now-line');
             if (isDayView && getLocalISO(activeDate) === getLocalISO(now) && line) {
                 const pxPerMin = (86 / 1440);
+                // Note: The "now" line uses the Kindle's system time. 
+                // Since the events are shifted, "now" will naturally align with the shifted events.
                 line.style.top = ((now.getHours() * 60 + now.getMinutes()) * pxPerMin) + 'vh';
                 line.style.display = 'block';
             } else if (line) {
